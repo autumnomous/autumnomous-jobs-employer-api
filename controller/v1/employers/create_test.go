@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"autumnomous.com/bit-jobs-api/controller/v1/employers"
 	"autumnomous.com/bit-jobs-api/shared/services/security/encryption"
@@ -98,13 +99,18 @@ func Test_Employer_CreateJob_CorrectData(t *testing.T) {
 	defer ts.Close()
 
 	data := map[string]string{
-		"jobtitle":          fmt.Sprintf("New Job %s", encryption.GeneratePassword(9)),
-		"jobstreetaddress":  "123 Street Avenue",
-		"jobcity":           "City",
-		"jobzipcode":        "00000",
-		"jobtype":           "full-time",
-		"jobremotefriendly": "yes",
-		"jobdescription":    "This is a new job",
+		"title":             fmt.Sprintf("New Job %s", encryption.GeneratePassword(9)),
+		"streetaddress":     "123 Street Avenue",
+		"city":              "City",
+		"zipcode":           "00000",
+		"type":              "full-time",
+		"remotefriendly":    "yes",
+		"description":       "This is a new job",
+		"payperiod":         "year",
+		"minsalary":         "10000",
+		"maxsalary":         "100000",
+		"poststartdatetime": time.Now().Format(time.RFC3339),
+		"postenddatetime":   time.Now().Format(time.RFC3339),
 	}
 
 	requestBody, err := json.Marshal(data)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"autumnomous.com/bit-jobs-api/shared/database"
 	employers "autumnomous.com/bit-jobs-api/shared/repository/employers"
@@ -347,15 +348,21 @@ func Test_EmployerRepository_EmployerCreateJob_IncorrectData(t *testing.T) {
 	Employer = testhelper.Helper_CreateEmployer(Employer, t)
 
 	data := map[string]string{
-		"jobtitle":         "",
-		"jobstreetaddress": "123 Street Avenue",
-		"jobcity":          "City",
-		"jobzipcode":       "00000",
-		"jobtags":          "full-time,remote-friendly",
-		"jobdescription":   "This is a new job",
+		"title":             "",
+		"streetaddress":     "123 Street Avenue",
+		"city":              "City",
+		"zipcode":           "00000",
+		"tags":              "full-time,remote-friendly",
+		"description":       "This is a new job",
+		"payperiod":         "year",
+		"poststartdatetime": time.Now().String(),
+		"postenddatetime":   time.Now().String(),
 	}
 
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["jobtitle"], data["jobstreetaddress"], data["jobcity"], data["jobzipcode"], data["jobtags"], data["jobdescription"])
+	minSalary := 10000
+	maxSalary := 100000
+
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["streetaddress"], data["city"], data["zipcode"], data["tags"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
 
 	assert.NotNil(err)
 	assert.Nil(job)
@@ -366,34 +373,23 @@ func Test_EmployerRepository_EmployerCreateJob_CorrectData(t *testing.T) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	Employer := &testhelper.TestEmployer{
-		FirstName: "First",
-		LastName:  "Last",
-		Email:     fmt.Sprintf("email-%s@site.com", encryption.GeneratePassword(9)),
-	}
-
-	password := encryption.GeneratePassword(9)
-	hashedPassword, err := encryption.HashPassword([]byte(password))
-
-	if err != nil {
-		log.Println(err)
-		t.Fatal()
-	}
-
-	Employer.HashedPassword = hashedPassword
-
-	Employer = testhelper.Helper_CreateEmployer(Employer, t)
+	Employer := testhelper.Helper_RandomEmployer(t)
 
 	data := map[string]string{
-		"jobtitle":         "Job Title",
-		"jobstreetaddress": "123 Street Avenue",
-		"jobcity":          "City",
-		"jobzipcode":       "00000",
-		"jobtags":          "full-time,remote-friendly",
-		"jobdescription":   "This is a new job",
+		"title":             "Job Title",
+		"streetaddress":     "123 Street Avenue",
+		"city":              "City",
+		"zipcode":           "00000",
+		"tags":              "full-time,remote-friendly",
+		"description":       "This is a new job",
+		"payperiod":         "year",
+		"poststartdatetime": time.Now().Format(time.RFC3339),
+		"postenddatetime":   time.Now().Format(time.RFC3339),
 	}
 
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["jobtitle"], data["jobstreetaddress"], data["jobcity"], data["jobzipcode"], data["jobtags"], data["jobdescription"])
+	minSalary := 10000
+	maxSalary := 100000
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["streetaddress"], data["city"], data["zipcode"], data["tags"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
 
 	assert.NotNil(job)
 	assert.Nil(err)
@@ -457,6 +453,94 @@ func Test_EmployerRepository_GetEmployerJobs_CorrectData(t *testing.T) {
 	jobs, err := repository.GetEmployerJobs(employer.PublicID)
 
 	assert.Equal(len(jobs), 3)
+	assert.Nil(err)
+}
+
+func Test_EmployerRepository_DeleteJob_IncorrectData_MissingJobPublicID(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	// job := testhelper.Helper_RandomJob(employer, t)
+
+	job, err := repository.DeleteJob(employer.PublicID, "")
+
+	assert.Nil(job)
+	assert.NotNil(err)
+}
+
+func Test_EmployerRepository_DeleteJob_IncorrectData_MissingEmployerPublicID(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	job := testhelper.Helper_RandomJob(employer, t)
+
+	result, err := repository.DeleteJob("", job.PublicID)
+
+	assert.Nil(result)
+	assert.NotNil(err)
+}
+
+func Test_EmployerRepository_DeleteJob_Correct(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	job := testhelper.Helper_RandomJob(employer, t)
+
+	result, err := repository.DeleteJob(employer.PublicID, job.PublicID)
+
+	assert.NotNil(result)
+	assert.Nil(err)
+}
+
+func Test_EmployerRepository_EditJob_MissingJobPublicID(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	job, err := repository.EditJob(employer.PublicID, "", "", "", "", "", "", "", "", "", "", 0, 0)
+
+	assert.Nil(job)
+	assert.NotNil(err)
+
+}
+
+func Test_EmployerRepository_EditJob_MissingEmployerPublicID(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	job, err := repository.EditJob("", "", "", "", "", "", "", "", "", "", "", 0, 0)
+
+	assert.Nil(job)
+	assert.NotNil(err)
+
+}
+
+func Test_EmployerRepository_EditJob_Correct(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	job := testhelper.Helper_RandomJob(employer, t)
+
+	result, err := repository.EditJob(employer.PublicID, job.PublicID, "A Job", "123 Street", "City", "00000", "full-time,remote", "this is a job", "2021-09-04", "2021-10-01", "hourly", 40, 50)
+
+	assert.NotNil(result)
+	assert.Equal(result.Title, "A Job")
+	assert.Equal(result.StreetAddress, "123 Street")
 	assert.Nil(err)
 }
 

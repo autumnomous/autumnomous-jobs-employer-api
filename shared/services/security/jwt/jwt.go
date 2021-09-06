@@ -92,7 +92,6 @@ func GetStrClaims(r *http.Request) (map[string]string, error) {
 
 	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
 	// authKey, err := base64.StdEncoding.DecodeString(auth)
-
 	// if err != nil {
 	// 	log.Println(err)
 	// 	return nil, err

@@ -24,14 +24,19 @@ type Employer struct {
 }
 
 type Job struct {
-	PublicID         string `json:"publicid"`
-	Title            string `json:"title"`
-	City             string `json:"city"`
-	StreetAddress    string `json:"streetaddress"`
-	ZipCode          string `json:"zipcode"`
-	Tags             string `json:"tags"`
-	Description      string `json:"description"` // make required?
-	EmployerPublicID string `json:"employerpublicid"`
+	PublicID          string `json:"publicid"`
+	Title             string `json:"title"`
+	City              string `json:"city"`
+	StreetAddress     string `json:"streetaddress"`
+	ZipCode           string `json:"zipcode"`
+	Tags              string `json:"tags"`
+	Description       string `json:"description"` // make required?
+	EmployerPublicID  string `json:"employerpublicid"`
+	MinSalary         int    `json:"minsalary"`
+	MaxSalary         int    `json:"maxsalary"`
+	PayPeriod         string `json:"payperiod"`
+	PostStartDatetime string `json:"poststartdatetime"`
+	PostEndDatetime   string `json:"postenddatetime"`
 }
 
 func NewEmployerRepository(db *sql.DB) *EmployerRepository {
@@ -44,7 +49,7 @@ func (repository *EmployerRepository) CreateEmployer(firstName, lastName, email,
 		return nil, errors.New("data cannot be empty")
 	}
 
-	employer := &Employer{FirstName: firstName, LastName: lastName, Email: email, Password: password}
+	employer := &Employer{FirstName: firstName, LastName: lastName, Email: email}
 
 	stmt, err := repository.Database.Prepare(`INSERT INTO employers(email, firstname, lastname, password) VALUES ($1, $2, $3, $4) RETURNING publicid;`)
 
@@ -184,7 +189,7 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 	}
 
 	Employer.PublicID = publicID
-	stmt, err = repository.Database.Prepare(`UPDATE users SET firstname=$1, lastname=$2, email=$3 WHERE publicid=$4;`)
+	stmt, err = repository.Database.Prepare(`UPDATE employers SET firstname=$1, lastname=$2, email=$3 WHERE publicid=$4;`)
 
 	if err != nil {
 		log.Println(err)
@@ -201,7 +206,7 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 	return Employer, nil
 }
 
-func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription string) (*Job, error) {
+func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
 
 	if jobTitle == "" {
 		return nil, errors.New("data cannot be empty")
@@ -211,8 +216,9 @@ func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTit
 
 	stmt, err := repository.Database.Prepare(`
 		INSERT INTO 
-		jobs(title, streetaddress, city, zipcode, tags, description, employerid) 
-		VALUES ($1, $2, $3, $4, $5, $6, (SELECT id FROM employers WHERE publicid=$7)) 
+		jobs(title, streetaddress, city, zipcode, tags, description, minsalary, 
+				maxsalary, payperiod, poststartdatetime, postenddatetime, employerid) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, (SELECT id FROM employers WHERE publicid=$12)) 
 		RETURNING publicid;`)
 
 	if err != nil {
@@ -220,7 +226,7 @@ func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTit
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription, employerPublicID).Scan(&job.PublicID)
+	err = stmt.QueryRow(jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription, minSalary, maxSalary, payPeriod, postStartDatetime, postEndDatetime, employerPublicID).Scan(&job.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -239,7 +245,9 @@ func (repository *EmployerRepository) GetJob(jobPublicID string) (*Job, error) {
 	var job Job
 
 	stmt, err := repository.Database.Prepare(`
-		SELECT jobs.title, jobs.city, jobs.streetaddress, jobs.zipcode, jobs.tags, jobs.description, employers.publicid
+		SELECT jobs.title, jobs.city, jobs.streetaddress, jobs.zipcode, jobs.tags, jobs.description, 
+			jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime,
+			jobs.postenddatetime, employers.publicid
 		FROM jobs
 		JOIN employers ON employers.id=jobs.employerid
 		WHERE jobs.publicid=$1;`,
@@ -250,7 +258,7 @@ func (repository *EmployerRepository) GetJob(jobPublicID string) (*Job, error) {
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.City, &job.StreetAddress, &job.ZipCode, &job.Tags, &job.Description, &job.EmployerPublicID)
+	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.City, &job.StreetAddress, &job.ZipCode, &job.Tags, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.EmployerPublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -271,7 +279,8 @@ func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) (
 	var jobs []*Job
 
 	stmt, err := repository.Database.Prepare(`
-			SELECT title, streetaddress, city, zipcode, tags, description, publicid 
+			SELECT title, streetaddress, city, zipcode, tags, description, 
+				minsalary, maxsalary, payperiod, poststartdatetime, postenddatetime, publicid 
 			FROM jobs 
 			WHERE employerid=(SELECT id FROM employers WHERE publicid=$1);`)
 
@@ -291,7 +300,7 @@ func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) (
 	for rows.Next() {
 		job := &Job{}
 
-		err := rows.Scan(&job.Title, &job.StreetAddress, &job.City, &job.ZipCode, &job.Tags, &job.Description, &job.PublicID)
+		err := rows.Scan(&job.Title, &job.StreetAddress, &job.City, &job.ZipCode, &job.Tags, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.PublicID)
 
 		if err != nil {
 			log.Println(err)
@@ -303,4 +312,99 @@ func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) (
 	}
 
 	return jobs, nil
+}
+
+func (repository *EmployerRepository) DeleteJob(employerPublicID, jobPublicID string) (*Job, error) {
+
+	if employerPublicID == "" || jobPublicID == "" {
+		return nil, errors.New("missing required value")
+	}
+
+	var job Job
+
+	stmt, err := repository.Database.Prepare(`DELETE FROM jobs WHERE publicid=$1 AND employerid=(SELECT id FROM employers WHERE publicid=$2) RETURNING title, city, streetaddress, zipcode,tags, description;`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = stmt.QueryRow(jobPublicID, employerPublicID).Scan(&job.Title, &job.City, &job.StreetAddress, &job.ZipCode, &job.Tags, &job.Description)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return &job, nil
+}
+
+func (repository *EmployerRepository) EditJob(employerPublicID, jobPublicID, jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
+
+	if employerPublicID == "" || jobPublicID == "" {
+		return nil, errors.New("missing required value")
+	}
+
+	job, err := repository.GetJob(jobPublicID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if jobTitle != "" {
+		job.Title = jobTitle
+	}
+
+	if jobStreetAddress != "" {
+		job.StreetAddress = jobStreetAddress
+	}
+
+	if jobCity != "" {
+		job.City = jobCity
+	}
+
+	if jobZipCode != "" {
+		job.ZipCode = jobZipCode
+	}
+
+	if jobTags != "" {
+		job.Tags = jobTags
+	}
+
+	if jobDescription != "" {
+		job.Description = jobDescription
+	}
+
+	if postStartDatetime != "" {
+		job.PostStartDatetime = postStartDatetime
+	}
+
+	if postEndDatetime != "" {
+		job.PostEndDatetime = postEndDatetime
+	}
+
+	if minSalary != 0 {
+		job.MinSalary = minSalary
+	}
+
+	if maxSalary != 0 {
+		job.MaxSalary = maxSalary
+	}
+
+	if payPeriod != "" {
+		job.PayPeriod = payPeriod
+	}
+	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, streetaddress=$2, city=$3, zipcode=$4, tags=$5, description=$6 , poststartdatetime=$7, postenddatetime=$8, minsalary=$9, maxsalary=$10, payperiod=$11 WHERE publicid=$12 AND employerid=(SELECT id FROM employers WHERE publicid=$13);`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = stmt.Exec(job.Title, job.StreetAddress, job.City, job.ZipCode, job.Tags, job.Description, job.PostStartDatetime, job.PostEndDatetime, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PublicID, employerPublicID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return job, nil
 }

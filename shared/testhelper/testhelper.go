@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"autumnomous.com/bit-jobs-api/shared/database"
 	"autumnomous.com/bit-jobs-api/shared/services/security/encryption"
@@ -35,14 +36,19 @@ type TestEmployer struct {
 }
 
 type TestJob struct {
-	PublicID         string `jaon:"publicid"`
-	Title            string `json:"title"`
-	City             string `json:"city"`
-	StreetAddress    string `json:"streetaddress"`
-	ZipCode          string `json:"zipcode"`
-	Tags             string `json:"tags"`
-	Description      string `json:"description"` // make required?
-	EmployerPublicID string `json:"employerpublicid"`
+	PublicID          string `jaon:"publicid"`
+	Title             string `json:"title"`
+	City              string `json:"city"`
+	StreetAddress     string `json:"streetaddress"`
+	ZipCode           string `json:"zipcode"`
+	Tags              string `json:"tags"`
+	Description       string `json:"description"` // make required?
+	EmployerPublicID  string `json:"employerpublicid"`
+	MinSalary         int    `json:"minsalary"`
+	MaxSalary         int    `json:"maxsalary"`
+	PayPeriod         string `json:"payperiod"`
+	PostStartDatetime string `json:"poststartdatetime"`
+	PostEndDatetime   string `json:"postenddatetime"`
 }
 
 type TestApplication struct {
@@ -165,15 +171,15 @@ func Helper_RandomApplicant(t *testing.T) *TestUser {
 
 func Helper_CreateJob(job *TestJob, t *testing.T) *TestJob {
 	stmt, err := database.DB.Prepare(`INSERT INTO 
-											jobs(title, streetaddress, city, zipcode, tags, description, employerid) 
-											VALUES ($1, $2, $3, $4, $5, $6, (SELECT id FROM employers WHERE publicid=$7)) 
+											jobs(title, streetaddress, city, zipcode, tags, description,minsalary, maxsalary, payperiod, poststartdatetime, postenddatetime, employerid) 
+											VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, (SELECT id FROM employers WHERE publicid=$12)) 
 											RETURNING publicid;`)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 
-	err = stmt.QueryRow(job.Title, job.StreetAddress, job.City, job.ZipCode, job.Tags, job.Description, job.EmployerPublicID).Scan(&job.PublicID)
+	err = stmt.QueryRow(job.Title, job.StreetAddress, job.City, job.ZipCode, job.Tags, job.Description, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PostStartDatetime, job.PostEndDatetime, job.EmployerPublicID).Scan(&job.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -186,13 +192,18 @@ func Helper_CreateJob(job *TestJob, t *testing.T) *TestJob {
 func Helper_RandomJob(employer *TestEmployer, t *testing.T) *TestJob {
 
 	job := &TestJob{
-		Title:            string(encryption.GeneratePassword(5)),
-		City:             string(encryption.GeneratePassword(5)),
-		StreetAddress:    string(encryption.GeneratePassword(5)),
-		ZipCode:          string(encryption.GeneratePassword(5)),
-		Tags:             strings.Join([]string{string(encryption.GeneratePassword(5)), string(encryption.GeneratePassword(5)), string(encryption.GeneratePassword(5))}, ","),
-		Description:      string(encryption.GeneratePassword(5)),
-		EmployerPublicID: employer.PublicID,
+		Title:             string(encryption.GeneratePassword(5)),
+		City:              string(encryption.GeneratePassword(5)),
+		StreetAddress:     string(encryption.GeneratePassword(5)),
+		ZipCode:           string(encryption.GeneratePassword(5)),
+		Tags:              strings.Join([]string{string(encryption.GeneratePassword(5)), string(encryption.GeneratePassword(5)), string(encryption.GeneratePassword(5))}, ","),
+		Description:       string(encryption.GeneratePassword(5)),
+		MinSalary:         0,
+		MaxSalary:         100,
+		PayPeriod:         "hour",
+		PostStartDatetime: time.Now().Format(time.RFC3339),
+		PostEndDatetime:   time.Now().Format(time.RFC3339),
+		EmployerPublicID:  employer.PublicID,
 	}
 
 	return Helper_CreateJob(job, t)
