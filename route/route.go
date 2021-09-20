@@ -3,9 +3,7 @@ package route
 import (
 	"net/http"
 
-	applicants "bit-jobs-api/controller/v1/applicants"
 	"bit-jobs-api/controller/v1/employers"
-	users "bit-jobs-api/controller/v1/users"
 	"bit-jobs-api/route/middleware/acl"
 	"bit-jobs-api/route/middleware/cors"
 	hr "bit-jobs-api/route/middleware/httprouterwrapper"
@@ -28,13 +26,6 @@ func LoadRoutes() http.Handler {
 
 func routes() *httprouter.Router {
 	r := httprouter.New()
-
-	r.GET("/get/jobs", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(users.GetJobs)))
-
-	r.POST("/applicant/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(applicants.Login)))
-	r.POST("/applicant/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(applicants.SignUp)))
-	r.POST("/applicant/update-account", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(applicants.UpdateAccount)))
-	r.POST("/applicant/update-password", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(applicants.UpdatePassword)))
 
 	r.POST("/employer/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.SignUp)))
 	r.POST("/employer/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.Login)))
