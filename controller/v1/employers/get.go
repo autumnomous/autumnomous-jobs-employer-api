@@ -5,10 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"autumnomous.com/bit-jobs-api/shared/repository/employers"
-	"autumnomous.com/bit-jobs-api/shared/repository/employers/accountmanagement"
-	"autumnomous.com/bit-jobs-api/shared/response"
-	"autumnomous.com/bit-jobs-api/shared/services/security/jwt"
+	"bit-jobs-api/shared/repository/employers"
+	"bit-jobs-api/shared/repository/employers/accountmanagement"
+	"bit-jobs-api/shared/response"
+	"bit-jobs-api/shared/services/security/jwt"
 )
 
 type JobsResponse struct {

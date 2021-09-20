@@ -1,8 +1,8 @@
 package employers
 
 import (
-	"autumnomous.com/bit-jobs-api/shared/database"
-	"autumnomous.com/bit-jobs-api/shared/repository/employers/accountmanagement"
+	"bit-jobs-api/shared/database"
+	"bit-jobs-api/shared/repository/employers/accountmanagement"
 )
 
 type EmployerRegistry struct {

@@ -8,10 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"autumnomous.com/bit-jobs-api/controller/v1/employers"
-	"autumnomous.com/bit-jobs-api/shared/repository/employers/accountmanagement"
-	"autumnomous.com/bit-jobs-api/shared/services/security/encryption"
-	"autumnomous.com/bit-jobs-api/shared/testhelper"
+	"bit-jobs-api/controller/v1/employers"
+	"bit-jobs-api/shared/repository/employers/accountmanagement"
+	"bit-jobs-api/shared/services/security/encryption"
+	"bit-jobs-api/shared/testhelper"
+
 	"github.com/stretchr/testify/assert"
 )
 

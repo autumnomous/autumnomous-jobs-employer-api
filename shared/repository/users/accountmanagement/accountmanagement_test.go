@@ -3,8 +3,9 @@ package accountmanagement_test
 import (
 	"testing"
 
-	"autumnomous.com/bit-jobs-api/shared/repository/users"
-	"autumnomous.com/bit-jobs-api/shared/testhelper"
+	"bit-jobs-api/shared/repository/users"
+	"bit-jobs-api/shared/testhelper"
+
 	"github.com/stretchr/testify/assert"
 )
 
