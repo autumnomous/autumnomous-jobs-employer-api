@@ -6,8 +6,9 @@ import (
 	"os"
 	"runtime"
 
-	"autumnomous.com/bit-jobs-api/route"
-	"autumnomous.com/bit-jobs-api/shared/database"
+	"bit-jobs-api/route"
+	"bit-jobs-api/shared/database"
+
 	"github.com/joho/godotenv"
 )
 

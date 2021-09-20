@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"autumnomous.com/bit-jobs-api/shared/response"
-	"autumnomous.com/bit-jobs-api/shared/services/security/jwt"
+	"bit-jobs-api/shared/response"
+	"bit-jobs-api/shared/services/security/jwt"
 )
 
 // DisallowAuth does not allow authenticated users to access the page

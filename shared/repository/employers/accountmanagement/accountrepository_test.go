@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	"autumnomous.com/bit-jobs-api/shared/database"
-	employers "autumnomous.com/bit-jobs-api/shared/repository/employers"
-	"autumnomous.com/bit-jobs-api/shared/repository/employers/accountmanagement"
-	"autumnomous.com/bit-jobs-api/shared/services/security/encryption"
-	"autumnomous.com/bit-jobs-api/shared/testhelper"
+	"bit-jobs-api/shared/database"
+	employers "bit-jobs-api/shared/repository/employers"
+	"bit-jobs-api/shared/repository/employers/accountmanagement"
+	"bit-jobs-api/shared/services/security/encryption"
+	"bit-jobs-api/shared/testhelper"
 
 	"github.com/stretchr/testify/assert"
 )

@@ -3,13 +3,13 @@ package route
 import (
 	"net/http"
 
-	applicants "autumnomous.com/bit-jobs-api/controller/v1/applicants"
-	"autumnomous.com/bit-jobs-api/controller/v1/employers"
-	users "autumnomous.com/bit-jobs-api/controller/v1/users"
-	"autumnomous.com/bit-jobs-api/route/middleware/acl"
-	"autumnomous.com/bit-jobs-api/route/middleware/cors"
-	hr "autumnomous.com/bit-jobs-api/route/middleware/httprouterwrapper"
-	"autumnomous.com/bit-jobs-api/route/middleware/logrequest"
+	applicants "bit-jobs-api/controller/v1/applicants"
+	"bit-jobs-api/controller/v1/employers"
+	users "bit-jobs-api/controller/v1/users"
+	"bit-jobs-api/route/middleware/acl"
+	"bit-jobs-api/route/middleware/cors"
+	hr "bit-jobs-api/route/middleware/httprouterwrapper"
+	"bit-jobs-api/route/middleware/logrequest"
 
 	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"
