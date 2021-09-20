@@ -39,6 +39,16 @@ type Job struct {
 	PostEndDatetime   string `json:"postenddatetime"`
 }
 
+type JobPackage struct {
+	ID           int     `json:"id"`
+	TypeID       string  `json:"typeid"`
+	IsActive     bool    `json:"isactive"`
+	Title        string  `json:"title"`
+	NumberOfJobs int     `json:"numberofjobs"`
+	Description  string  `json:"description"`
+	Price        float64 `json:"price"`
+}
+
 func NewEmployerRepository(db *sql.DB) *EmployerRepository {
 	return &EmployerRepository{Database: db}
 }
@@ -270,48 +280,51 @@ func (repository *EmployerRepository) GetJob(jobPublicID string) (*Job, error) {
 	return &job, nil
 }
 
-func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) ([]*Job, error) {
+func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) ([]*Job, int, error) {
 
 	if employerPublicID == "" {
-		return nil, errors.New("missing required value")
+		return nil, -1, errors.New("missing required value")
 	}
 
 	var jobs []*Job
+	var employerTotalPostsBought int
 
 	stmt, err := repository.Database.Prepare(`
-			SELECT title, streetaddress, city, zipcode, tags, description, 
-				minsalary, maxsalary, payperiod, poststartdatetime, postenddatetime, publicid 
-			FROM jobs 
-			WHERE employerid=(SELECT id FROM employers WHERE publicid=$1);`)
+			SELECT jobs.title, jobs.tags, jobs.description, 
+				jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime, jobs.postenddatetime, jobs.publicid,
+				employers.totalpostsbought
+			FROM jobs
+			JOIN employers ON employers.id=jobs.employerid
+			WHERE jobs.employerid=(SELECT id FROM employers WHERE publicid=$1);`)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 
 	rows, err := stmt.Query(employerPublicID)
 
 	if err != nil {
 		log.Println(err)
-		return nil, err
+		return nil, -1, err
 	}
 
 	defer rows.Close()
 	for rows.Next() {
 		job := &Job{}
 
-		err := rows.Scan(&job.Title, &job.StreetAddress, &job.City, &job.ZipCode, &job.Tags, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.PublicID)
+		err := rows.Scan(&job.Title, &job.Tags, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.PublicID, &employerTotalPostsBought)
 
 		if err != nil {
 			log.Println(err)
-			return nil, err
+			return nil, -1, err
 		}
 		job.EmployerPublicID = employerPublicID
 
 		jobs = append(jobs, job)
 	}
 
-	return jobs, nil
+	return jobs, employerTotalPostsBought, nil
 }
 
 func (repository *EmployerRepository) DeleteJob(employerPublicID, jobPublicID string) (*Job, error) {
@@ -407,4 +420,42 @@ func (repository *EmployerRepository) EditJob(employerPublicID, jobPublicID, job
 	}
 
 	return job, nil
+}
+
+func (repository *EmployerRepository) GetActiveJobPackages() ([]*JobPackage, error) {
+
+	var packages []*JobPackage
+
+	stmt, err := repository.Database.Prepare(`
+			SELECT id, typeid, isactive, title, numberofjobs, description, price
+			FROM jobpackages
+			WHERE isactive=TRUE;`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query()
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		jobPackage := &JobPackage{}
+
+		err := rows.Scan(&jobPackage.ID, &jobPackage.TypeID, &jobPackage.IsActive, &jobPackage.Title, &jobPackage.NumberOfJobs, &jobPackage.Description, &jobPackage.Price)
+
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		packages = append(packages, jobPackage)
+	}
+
+	return packages, nil
 }

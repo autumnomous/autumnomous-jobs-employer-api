@@ -5,6 +5,7 @@ import (
 
 	applicants "autumnomous.com/bit-jobs-api/controller/v1/applicants"
 	"autumnomous.com/bit-jobs-api/controller/v1/employers"
+	users "autumnomous.com/bit-jobs-api/controller/v1/users"
 	"autumnomous.com/bit-jobs-api/route/middleware/acl"
 	"autumnomous.com/bit-jobs-api/route/middleware/cors"
 	hr "autumnomous.com/bit-jobs-api/route/middleware/httprouterwrapper"
@@ -28,6 +29,8 @@ func LoadRoutes() http.Handler {
 func routes() *httprouter.Router {
 	r := httprouter.New()
 
+	r.GET("/get/jobs", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(users.GetJobs)))
+
 	r.POST("/applicant/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(applicants.Login)))
 	r.POST("/applicant/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(applicants.SignUp)))
 	r.POST("/applicant/update-account", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(applicants.UpdateAccount)))
@@ -35,11 +38,14 @@ func routes() *httprouter.Router {
 
 	r.POST("/employer/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.SignUp)))
 	r.POST("/employer/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.Login)))
+	r.POST("/employer/update-password", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.UpdatePassword)))
+	r.GET("/employer/get", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetEmployer)))
 	r.POST("/employer/create/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.CreateJob)))
 	r.POST("/employer/edit/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.EditJob)))
 	r.GET("/employer/get/jobs", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetJobs)))
 	r.POST("/employer/get/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetJob)))
 	r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.DeleteJob)))
+	r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetActiveJobPackages)))
 
 	// r.POST("/get-user", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(users.GetUser)))
 

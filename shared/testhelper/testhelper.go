@@ -26,13 +26,14 @@ type TestUser struct {
 }
 
 type TestEmployer struct {
-	FirstName       string
-	LastName        string
-	Email           string
-	Password        string
-	CompanyPublicID string
-	HashedPassword  []byte
-	PublicID        string
+	FirstName        string
+	LastName         string
+	Email            string
+	Password         string
+	TotalPostsBought int
+	CompanyPublicID  string
+	HashedPassword   []byte
+	PublicID         string
 }
 
 type TestJob struct {
@@ -58,6 +59,16 @@ type TestApplication struct {
 	ID          int
 	ApplicantID string `json:"applicantid"`
 	PublicID    string `json:"publicid"`
+}
+
+type TestJobPackage struct {
+	ID           int     `json:"id"`
+	TypeID       string  `json:"typeid"`
+	IsActive     bool    `json:"isactive"`
+	Title        string  `json:"title"`
+	NumberOfJobs int     `json:"numberofjobs"`
+	Description  string  `json:"description"`
+	Price        float64 `json:"price"`
 }
 
 func Init() {
@@ -207,6 +218,41 @@ func Helper_RandomJob(employer *TestEmployer, t *testing.T) *TestJob {
 	}
 
 	return Helper_CreateJob(job, t)
+}
+
+func Helper_CreateJobPackage(pack *TestJobPackage, t *testing.T) *TestJobPackage {
+
+	stmt, err := database.DB.Prepare(`INSERT INTO 
+											jobpackages(typeid, isactive, title, numberofjobs, description, price) 
+											VALUES ($1, $2, $3, $4, $5, $6) 
+											RETURNING id;`)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	err = stmt.QueryRow(pack.TypeID, pack.IsActive, pack.Title, pack.NumberOfJobs, pack.Description, pack.Price).Scan(&pack.ID)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	return pack
+}
+
+func Helper_RandomJobPackage(t *testing.T) *TestJobPackage {
+
+	pack := &TestJobPackage{
+		TypeID:       string(encryption.GeneratePassword(5)),
+		IsActive:     true,
+		Title:        string(encryption.GeneratePassword(5)),
+		NumberOfJobs: 3,
+		Description:  string(encryption.GeneratePassword(5)),
+		Price:        100.00,
+	}
+
+	return Helper_CreateJobPackage(pack, t)
 }
 
 // func Helper_ChangeRegistrationStep(step string, Applicant *TestUser, t *testing.T) error {

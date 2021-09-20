@@ -432,10 +432,11 @@ func Test_EmployerRepository_GetEmployerJobs_IncorrectData(t *testing.T) {
 	assert := assert.New(t)
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
-
-	jobs, err := repository.GetEmployerJobs("")
+	var totalpostsbought int
+	jobs, totalpostsbought, err := repository.GetEmployerJobs("")
 
 	assert.Nil(jobs)
+	assert.Equal(totalpostsbought, -1)
 	assert.NotNil(err)
 }
 
@@ -445,14 +446,16 @@ func Test_EmployerRepository_GetEmployerJobs_CorrectData(t *testing.T) {
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
 	employer := testhelper.Helper_RandomEmployer(t)
-
+	var totalpostsbought int
 	testhelper.Helper_RandomJob(employer, t)
 	testhelper.Helper_RandomJob(employer, t)
 	testhelper.Helper_RandomJob(employer, t)
 
-	jobs, err := repository.GetEmployerJobs(employer.PublicID)
+	jobs, totalpostsbought, err := repository.GetEmployerJobs(employer.PublicID)
 
+	employer.TotalPostsBought = totalpostsbought
 	assert.Equal(len(jobs), 3)
+	assert.Equal(employer.TotalPostsBought, 0)
 	assert.Nil(err)
 }
 
@@ -542,6 +545,21 @@ func Test_EmployerRepository_EditJob_Correct(t *testing.T) {
 	assert.Equal(result.Title, "A Job")
 	assert.Equal(result.StreetAddress, "123 Street")
 	assert.Nil(err)
+}
+
+func Test_EmployerRepository_GetActiveJobPackages_Correct(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	testhelper.Helper_RandomJobPackage(t)
+
+	result, err := repository.GetActiveJobPackages()
+
+	assert.Nil(err)
+	assert.NotNil(result)
+	assert.GreaterOrEqual(len(result), 1)
+
 }
 
 // func Test_EmployerRepository_GetEmployerRegistrationStep_CorrectData_NewEmployer(t *testing.T) {
