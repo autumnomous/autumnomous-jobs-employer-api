@@ -10,15 +10,7 @@ import (
 	"autumnomous.com/bit-jobs-api/shared/services/security/jwt"
 )
 
-// "jobtitle":          "",
-// 			"jobstreetaddress":  "",
-// 			"jobcity":           "",
-// 			"jobzipcode":        "",
-// 			"jobtype":           "",
-// 			"jobremotefriendly": "",
-// 			"jobdescription":    "",
-
-type createJobDetails struct {
+type editJobDetails struct {
 	Title             string `json:"title"`
 	StreetAddress     string `json:"streetaddress"`
 	City              string `json:"city"`
@@ -30,24 +22,20 @@ type createJobDetails struct {
 	PayPeriod         string `json:"payperiod"`
 	PostStartDatetime string `json:"poststartdatetime"`
 	PostEndDatetime   string `json:"postenddatetime"`
+	PublicID          string `json:"publicid"`
 }
 
-func CreateJob(w http.ResponseWriter, r *http.Request) {
+func EditJob(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
-		response.SendJSONMessage(w, http.StatusMethodNotAllowed, "Method Not Allowed")
+		response.SendJSONMessage(w, http.StatusMethodNotAllowed, "method not allowed")
 		return
 	}
 
-	var jobDetails createJobDetails
+	var details editJobDetails
 
 	decoder := json.NewDecoder(r.Body)
-	decoder.Decode(&jobDetails)
-
-	if jobDetails.Title == "" {
-		response.SendJSONMessage(w, http.StatusBadRequest, response.MissingRequiredValue)
-		return
-	}
+	decoder.Decode(&details)
 
 	tokenClaims, err := jwt.GetStrClaims(r)
 
@@ -61,7 +49,7 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	job, err := repository.EmployerCreateJob(publicID, jobDetails.Title, jobDetails.StreetAddress, jobDetails.City, jobDetails.ZipCode, jobDetails.Tags, jobDetails.Description, jobDetails.PostStartDatetime, jobDetails.PostEndDatetime, jobDetails.PayPeriod, jobDetails.MinSalary, jobDetails.MaxSalary)
+	job, err := repository.EditJob(publicID, details.PublicID, details.Title, details.StreetAddress, details.City, details.ZipCode, details.Tags, details.Description, details.PostStartDatetime, details.PostEndDatetime, details.PayPeriod, details.MinSalary, details.MaxSalary)
 
 	if err != nil {
 		log.Println(err)
@@ -70,5 +58,4 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendJSON(w, job)
-
 }

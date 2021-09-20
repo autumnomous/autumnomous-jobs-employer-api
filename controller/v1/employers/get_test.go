@@ -2,6 +2,7 @@ package employers_test
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -100,5 +101,46 @@ func Test_Employer_GetJobs_Correct(t *testing.T) {
 	assert.Nil(err)
 	assert.Equal(int(http.StatusOK), response.StatusCode)
 	assert.Equal(len(result), 3)
+
+}
+
+func Test_Employer_GetJobPackages_Correct(t *testing.T) {
+
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(employers.GetActiveJobPackages))
+
+	defer ts.Close()
+
+	request, err := http.NewRequest("GET", ts.URL, nil)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	testhelper.Helper_RandomJobPackage(t)
+
+	token, err := jwt.GenerateToken(employer.PublicID)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	httpClient := &http.Client{}
+
+	response, err := httpClient.Do(request)
+
+	decoder := json.NewDecoder(response.Body)
+	var result []map[string]string
+
+	decoder.Decode(&result)
+	log.Println(result)
+	assert.Nil(err)
+	assert.Equal(int(http.StatusOK), response.StatusCode)
+	assert.GreaterOrEqual(len(result), 1)
 
 }
