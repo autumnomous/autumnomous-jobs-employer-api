@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt"
 )
 
 var signingKey = []byte(os.Getenv("KNIT_SIGNING_KEY"))
@@ -25,9 +24,9 @@ func GenerateToken(userID string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["user"] = userID
-	claims["exp"] = time.Now().Add(time.Minute * 60 * 24 * 7).Unix()
-	claims["iat"] = time.Now()
-	claims["nbf"] = time.Now()
+	// claims["exp"] = time.Now().Add(time.Minute * 60 * 24 * 7).Unix()
+	// claims["iat"] = time.Now()
+	// claims["nbf"] = time.Now()
 
 	tokenStr, err := token.SignedString(signingKey)
 
@@ -107,9 +106,9 @@ func GetStrClaims(r *http.Request) (map[string]string, error) {
 	strClaims := make(map[string]string)
 
 	strClaims["user"] = fmt.Sprintf("%v", claims["user"])
-	strClaims["exp"] = fmt.Sprintf("%v", claims["exp"])
-	strClaims["iat"] = fmt.Sprintf("%v", claims["iat"])
-	strClaims["nbf"] = fmt.Sprintf("%v", claims["nbf"])
+	// strClaims["exp"] = fmt.Sprintf("%v", claims["exp"])
+	// strClaims["iat"] = fmt.Sprintf("%v", claims["iat"])
+	// strClaims["nbf"] = fmt.Sprintf("%v", claims["nbf"])
 
 	return strClaims, nil
 }
