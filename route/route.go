@@ -36,7 +36,7 @@ func routes() *httprouter.Router {
 	r.GET("/employer/get/jobs", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetJobs)))
 	r.POST("/employer/get/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetJob)))
 	r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.DeleteJob)))
-	r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.GetActiveJobPackages)))
+	r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetActiveJobPackages)))
 
 	// r.POST("/get-user", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(users.GetUser)))
 
