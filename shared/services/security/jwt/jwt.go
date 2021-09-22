@@ -56,10 +56,10 @@ func  GenerateToken(userId string) (string, error) {
 	tokenString, err := token.SignedString([]byte(os.Getenv("KNIT_SIGNING_KEY")))
 
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	return tokenString
+	return tokenString, err
 }
 
 // ParseToken parses a given JWT token
