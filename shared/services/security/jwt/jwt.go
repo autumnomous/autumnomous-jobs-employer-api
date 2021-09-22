@@ -41,7 +41,7 @@ type JWTData struct {
 	CustomClaims map[string]string `json:"custom,omitempty"`
 }
 
-func  GenerateToken(userId string) string {
+func  GenerateToken(userId string) (string, error) {
 
 	claims := JWTData{
 		StandardClaims: jwt.StandardClaims{
