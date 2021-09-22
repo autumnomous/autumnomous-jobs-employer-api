@@ -55,6 +55,57 @@ func DisallowAnon(h http.Handler) http.Handler {
 	})
 }
 
+func ValidateMyJWT(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		s := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
+		if len(s) == 2 {
+			b, err := base64.StdEncoding.DecodeString(s[1])
+			if err == nil {
+				bearerToken := strings.SplitN(string(b), ":", 2)
+				if len(bearerToken) == 2 {
+
+					claims, err := jwt.ParseWithClaims(bearerToken[0], &models.JWTData{}, func(token *jwt.Token) (interface{}, error) {
+						if jwt.SigningMethodHS256 != token.Method && !token.Valid {
+							return nil, errors.New("Invalid signing algorithm")
+						}
+						return []byte(os.Getenv("KNIT_SIGNING_KEY")), nil
+					})
+
+					if err != nil {
+						log.Println(err)
+					}
+
+					data := claims.Claims.(*models.JWTData)
+
+					if data == nil {
+						log.Print("data cannot be nil")
+						//TODO: respond with an httpstatus of not authorized
+					} else {
+						userId := data.CustomClaims["user"]
+
+						if userId == nil || userId == "" {
+							//TODO: respond with an httpstatus of not authorized
+						} else {
+							//TODO: get valid/active user by userid
+							//validate user below
+
+							if userId == "user" {
+								log.Println("bad keys")
+								//todo: respond with not authorized
+							} else {
+								h.ServeHTTP(w, req)
+							}
+						}
+					}
+				}
+			}
+		} else {
+			log.Println("bearer token bad")
+			//respond with invalid token
+		}
+	})
+}
+
 //AllowAPIKey allows authentication if an API key is present
 func AllowAPIKey(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
