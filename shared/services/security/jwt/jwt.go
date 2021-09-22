@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	jwt "github.com/golang-jwt/jwt"
 )
@@ -19,7 +20,7 @@ type Token struct {
 }
 
 // GenerateToken generates a JWT Token
-func GenerateToken(userID string) (string, error) {
+/*func GenerateToken(userID string) (string, error) {
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -31,6 +32,34 @@ func GenerateToken(userID string) (string, error) {
 	tokenStr, err := token.SignedString(signingKey)
 
 	return tokenStr, err
+} */
+
+type JWTData struct {
+	// Standard claims are the standard jwt claims from the IETF standard
+	// https://tools.ietf.org/html/rfc7519
+	jwt.StandardClaims
+	CustomClaims map[string]string `json:"custom,omitempty"`
+}
+
+func  GenerateToken(userId string) string {
+
+	claims := JWTData{
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+		},
+		CustomClaims: map[string]string{
+			"user": userId,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, err := token.SignedString([]byte(os.Getenv("KNIT_SIGNING_KEY")))
+
+	if err != nil {
+		return ""
+	}
+
+	return tokenString
 }
 
 // ParseToken parses a given JWT token
