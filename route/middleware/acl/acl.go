@@ -2,14 +2,25 @@ package acl
 
 import (
 	"encoding/base64"
+	"errors"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 
+	"bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/response"
-	"bit-jobs-api/shared/services/security/jwt"
+	jwtalso "bit-jobs-api/shared/services/security/jwt"
+
+	jwt "github.com/golang-jwt/jwt"
 )
+
+type JWTData struct {
+	// Standard claims are the standard jwt claims from the IETF standard
+	// https://tools.ietf.org/html/rfc7519
+	jwt.StandardClaims
+	CustomClaims map[string]string `json:"custom,omitempty"`
+}
 
 // DisallowAuth does not allow authenticated users to access the page
 func DisallowAuth(h http.Handler) http.Handler {
@@ -36,14 +47,14 @@ func DisallowAnon(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Header.Get("Authorization") != "" {
-			claims, err := jwt.GetClaims(r)
+			claims, err := jwtalso.GetClaims(r)
 
 			if err != nil {
 				log.Println(err)
 				response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
 			}
 
-			if !jwt.ValidateToken(claims) {
+			if !jwtalso.ValidateToken(claims) {
 				response.SendJSONMessage(w, http.StatusUnauthorized, response.Unauthorized)
 			}
 
@@ -58,41 +69,53 @@ func DisallowAnon(h http.Handler) http.Handler {
 func ValidateMyJWT(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		s := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
+		log.Println(s)
 		if len(s) == 2 {
 			b, err := base64.StdEncoding.DecodeString(s[1])
+			log.Println(s[1])
+			log.Println(err)
 			if err == nil {
 				bearerToken := strings.SplitN(string(b), ":", 2)
-				if len(bearerToken) == 2 {
+				log.Println(len(bearerToken))
+				if len(bearerToken) == 1 {
 
-					claims, err := jwt.ParseWithClaims(bearerToken[0], &models.JWTData{}, func(token *jwt.Token) (interface{}, error) {
+					claims, err := jwt.ParseWithClaims(bearerToken[0], &JWTData{}, func(token *jwt.Token) (interface{}, error) {
 						if jwt.SigningMethodHS256 != token.Method && !token.Valid {
-							return nil, errors.New("Invalid signing algorithm")
+							return nil, errors.New("invalid signing algorithm")
 						}
 						return []byte(os.Getenv("KNIT_SIGNING_KEY")), nil
 					})
 
 					if err != nil {
 						log.Println(err)
+						response.SendJSONMessage(w, http.StatusBadRequest, "Couldn't parse JWT")
 					}
 
-					data := claims.Claims.(*models.JWTData)
+					data := claims.Claims.(*JWTData)
 
 					if data == nil {
 						log.Print("data cannot be nil")
+						response.SendJSONMessage(w, http.StatusUnauthorized, "Not authorized")
 						//TODO: respond with an httpstatus of not authorized
 					} else {
 						userId := data.CustomClaims["user"]
 
-						if userId == nil || userId == "" {
+						if userId == "" {
 							//TODO: respond with an httpstatus of not authorized
+							response.SendJSONMessage(w, http.StatusUnauthorized, "User ID is empty")
 						} else {
 							//TODO: get valid/active user by userid
+							repository := employers.NewEmployerRegistry().GetEmployerRepository()
+							_, err := repository.GetEmployer(userId)
+
 							//validate user below
 
-							if userId == "user" {
+							if err != nil {
 								log.Println("bad keys")
 								//todo: respond with not authorized
+								response.SendJSONMessage(w, http.StatusUnauthorized, "Bad keys")
 							} else {
+
 								h.ServeHTTP(w, req)
 							}
 						}

@@ -79,6 +79,12 @@ func (repository *EmployerRepository) CreateEmployer(firstName, lastName, email,
 	return employer, nil
 }
 
+func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, error) {
+	// TODO
+
+	return &Employer{}, nil
+}
+
 func (repository *EmployerRepository) AuthenticateEmployerPassword(email, password string) (bool, bool, string, error) {
 
 	if email == "" || password == "" {

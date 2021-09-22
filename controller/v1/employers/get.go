@@ -122,4 +122,5 @@ func GetActiveJobPackages(w http.ResponseWriter, r *http.Request) {
 
 func GetEmployer(w http.ResponseWriter, r *http.Request) {
 
+	response.SendJSON(w, "OK")
 }
