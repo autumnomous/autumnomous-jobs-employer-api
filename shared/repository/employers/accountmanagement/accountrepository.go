@@ -18,6 +18,7 @@ type Employer struct {
 	FirstName              string `json:"firstname"`
 	LastName               string `json:"lastname"`
 	Email                  string `json:"email"`
+	TotalPostsBought       int    `json:"totalpostsbought"`
 	Password               string
 	CompanyPublicID        string `json:"companypublicid"`
 	PublicID               string `json:"publicid"`
@@ -80,9 +81,33 @@ func (repository *EmployerRepository) CreateEmployer(firstName, lastName, email,
 }
 
 func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, error) {
-	// TODO
 
-	return &Employer{}, nil
+	if userID == "" {
+		return nil, errors.New("missing required value")
+	}
+	var employer Employer
+
+	stmt, err := repository.Database.Prepare(`
+		SELECT firstname, lastname, email, totalpostsbought
+		FROM employers
+		WHERE publicid=$1;`,
+	)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	employer.PublicID = userID
+
+	return &employer, nil
 }
 
 func (repository *EmployerRepository) AuthenticateEmployerPassword(email, password string) (bool, bool, string, error) {

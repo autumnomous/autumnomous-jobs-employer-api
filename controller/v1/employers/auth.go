@@ -1,6 +1,7 @@
 package employers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -49,8 +50,10 @@ func Login(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		encodedTokenStr := base64.StdEncoding.EncodeToString([]byte(tokenStr))
+
 		token := map[string]interface{}{
-			"token":                  tokenStr,
+			"token":                  encodedTokenStr,
 			"initialpasswordchanged": initialPasswordChanged,
 		}
 		response.SendJSON(w, token)

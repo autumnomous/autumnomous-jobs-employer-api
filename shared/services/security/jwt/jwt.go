@@ -63,36 +63,26 @@ func GenerateToken(userId string) (string, error) {
 }
 
 // ParseToken parses a given JWT token
-func ParseToken(inputTokenString string) (*jwt.Token, jwt.MapClaims, error) {
+func ParseToken(inputTokenString string) (*JWTData, error) {
 
-	token, err := jwt.Parse(inputTokenString, func(token *jwt.Token) (interface{}, error) {
-
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+	claims, err := jwt.ParseWithClaims(inputTokenString, &JWTData{}, func(token *jwt.Token) (interface{}, error) {
+		if jwt.SigningMethodHS256 != token.Method && !token.Valid {
+			return nil, errors.New("invalid signing algorithm")
 		}
-		return signingKey, nil
+		return []byte(os.Getenv("KNIT_SIGNING_KEY")), nil
 	})
 
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		return token, claims, nil
-	} else {
-		return nil, nil, err
+	if err != nil {
+		log.Println(err)
+		return nil, err
 	}
 
-}
+	return claims.Claims.(*JWTData), nil
 
-// ValidateToken confirms that a token is valid
-func ValidateToken(claims jwt.MapClaims) bool {
-
-	if claims.Valid() == nil {
-		return true
-	}
-
-	return false
 }
 
 // GetClaims returns the jwt claims as a map
-func GetClaims(r *http.Request) (jwt.MapClaims, error) {
+func GetClaims(r *http.Request) (*JWTData, error) {
 	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
 	// log.Println(auth)
 	// authKey, err := base64.StdEncoding.DecodeString(auth)
@@ -102,7 +92,7 @@ func GetClaims(r *http.Request) (jwt.MapClaims, error) {
 	// 	return nil, err
 	// }
 
-	_, claims, err := ParseToken(auth)
+	claims, err := ParseToken(auth)
 	if err != nil {
 		log.Println(err)
 		return nil, err
@@ -125,7 +115,7 @@ func GetStrClaims(r *http.Request) (map[string]string, error) {
 	// 	return nil, err
 	// }
 
-	_, claims, err := ParseToken(auth)
+	claims, err := ParseToken(auth)
 
 	if err != nil {
 		log.Println(err)
@@ -134,7 +124,7 @@ func GetStrClaims(r *http.Request) (map[string]string, error) {
 
 	strClaims := make(map[string]string)
 
-	strClaims["user"] = fmt.Sprintf("%v", claims["user"])
+	strClaims["user"] = fmt.Sprintf("%v", claims.CustomClaims["user"])
 	// strClaims["exp"] = fmt.Sprintf("%v", claims["exp"])
 	// strClaims["iat"] = fmt.Sprintf("%v", claims["iat"])
 	// strClaims["nbf"] = fmt.Sprintf("%v", claims["nbf"])

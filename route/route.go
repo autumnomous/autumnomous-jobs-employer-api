@@ -29,24 +29,24 @@ func routes() *httprouter.Router {
 
 	r.POST("/employer/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.SignUp)))
 	r.POST("/employer/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.Login)))
-	r.POST("/employer/update-password", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.UpdatePassword)))
+	r.POST("/employer/update-password", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdatePassword)))
 	r.GET("/employer/get", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetEmployer)))
-	r.POST("/employer/create/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.CreateJob)))
-	r.POST("/employer/edit/job", hr.Handler(alice.New(acl.DisallowAnon, acl.ValidateMyJWT).ThenFunc(employers.EditJob)))
-	r.GET("/employer/get/jobs", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetJobs)))
-	r.POST("/employer/get/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.GetJob)))
-	r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(employers.DeleteJob)))
+	r.POST("/employer/create/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.CreateJob)))
+	r.POST("/employer/edit/job", hr.Handler(alice.New(acl.ValidateMyJWT, acl.ValidateMyJWT).ThenFunc(employers.EditJob)))
+	r.GET("/employer/get/jobs", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetJobs)))
+	r.POST("/employer/get/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetJob)))
+	r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.DeleteJob)))
 	r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetActiveJobPackages)))
 
-	// r.POST("/get-user", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(users.GetUser)))
+	// r.POST("/get-user", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(users.GetUser)))
 
-	// r.GET("/get/client/registration", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(clients.CheckRegistration)))
-	// r.POST("/set/client/registration", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(clients.SetRegistration)))
+	// r.GET("/get/client/registration", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(clients.CheckRegistration)))
+	// r.POST("/set/client/registration", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(clients.SetRegistration)))
 
-	// r.GET("/customers/:id", hr.Handler(alice.New(acl.DisallowAnon).ThenFunc(clients.GetClientCustomers)))
+	// r.GET("/customers/:id", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(clients.GetClientCustomers)))
 	// Enable Pprof
 	// r.GET("/debug/pprof/*pprof", hr.Handler(alice.
-	// 	New(acl.DisallowAnon).
+	// 	New(acl.ValidateMyJWT).
 	// 	ThenFunc(pprofhandler.Handler)))
 
 	return r
