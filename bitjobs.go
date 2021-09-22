@@ -29,7 +29,7 @@ func main() {
 
 	// Connect to databases
 
-	database.Connect("DATABASE_URL")
+	database.Connect("HEROKU_POSTGRESQL_CYAN_URL")
 
 	port := os.Getenv("PORT")
 	if len(port) == 0 {
