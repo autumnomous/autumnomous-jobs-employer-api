@@ -92,6 +92,35 @@ func Test_EmployerRepository_CreateEmployer_Fail_EmptyData(t *testing.T) {
 
 }
 
+func Test_EmployerRepository_GetEmployer(t *testing.T) {
+	assert := assert.New(t)
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	repository := accountmanagement.NewEmployerRepository(database.DB)
+
+	result, err := repository.GetEmployer(employer.PublicID)
+
+	assert.Equal(result.FirstName, employer.FirstName)
+	assert.Equal(result.LastName, employer.LastName)
+	assert.Equal(result.Email, employer.Email)
+	assert.NotNil(result.PublicID)
+	assert.Nil(err)
+
+}
+
+func Test_EmployerRepository_GetEmployer_Fail_EmptyData(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := accountmanagement.NewEmployerRepository(database.DB)
+
+	result, err := repository.GetEmployer("")
+
+	assert.NotNil(err)
+	assert.Nil(result)
+
+}
+
 func Test_EmployerRepository_AuthenticateEmployerPassword_NoDataReceived(t *testing.T) {
 
 	assert := assert.New(t)
