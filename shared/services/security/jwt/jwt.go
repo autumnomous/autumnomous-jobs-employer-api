@@ -41,11 +41,11 @@ type JWTData struct {
 	CustomClaims map[string]string `json:"custom,omitempty"`
 }
 
-func  GenerateToken(userId string) (string, error) {
+func GenerateToken(userId string) (string, error) {
 
 	claims := JWTData{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
 		},
 		CustomClaims: map[string]string{
 			"user": userId,
