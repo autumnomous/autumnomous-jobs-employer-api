@@ -81,7 +81,7 @@ func Init() {
 		log.Fatal("Error loading test.env file:", err)
 	}
 
-	database.Connect("HEROKU_POSTGRESQL_JADE_URL")
+	database.Connect("DATABASE_URL")
 
 }
 
