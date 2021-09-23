@@ -51,6 +51,33 @@ type JobPackage struct {
 	Price        float64 `json:"price"`
 }
 
+// RegistrationStep represents which stage in the registration process the user is in
+type RegistrationStep int64
+
+const (
+	// ChangePassword Registration Step 1
+	ChangePassword RegistrationStep = iota
+
+	// PersonalInformation Registration Step 2
+	PersonalInformation
+
+	// CompanyDetails Registration Step 3
+	CompanyDetails
+
+	// PaymentMethod Registration Step 4
+	PaymentMethod
+
+	// PaymentDetails Registration Step 5
+	PaymentDetails
+
+	// Complete Registration Step 6
+	Complete
+)
+
+func (rs RegistrationStep) String() string {
+	return [...]string{"change-password", "personal-information", "company-details", "payment-method", "payment-details", "complete"}[rs]
+}
+
 func NewEmployerRepository(db *sql.DB) *EmployerRepository {
 	return &EmployerRepository{Database: db}
 }
@@ -110,39 +137,38 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 	return &employer, nil
 }
 
-func (repository *EmployerRepository) AuthenticateEmployerPassword(email, password string) (bool, bool, string, error) {
+func (repository *EmployerRepository) AuthenticateEmployerPassword(email, password string) (bool, string, string, error) {
 
 	if email == "" || password == "" {
-		return false, false, "", nil
+		return false, "", "", nil
 	}
 
-	var databasePassword, publicID string
-	var initialPasswordChanged bool
-	stmt, err := repository.Database.Prepare(`SELECT password, initialpasswordchanged, publicid FROM employers WHERE email=$1;`)
+	var databasePassword, publicID, registrationStep string
+	stmt, err := repository.Database.Prepare(`SELECT password, registrationStep, publicid FROM employers WHERE email=$1;`)
 
 	if err != nil {
 		log.Println(err)
-		return false, false, "", err
+		return false, "", "", err
 	}
 
-	err = stmt.QueryRow(email).Scan(&databasePassword, &initialPasswordChanged, &publicID)
+	err = stmt.QueryRow(email).Scan(&databasePassword, &registrationStep, &publicID)
 
 	if err != nil {
 
 		if err.Error() == "sql: no rows in result set" {
-			return false, false, "", nil
+			return false, "", "", nil
 		} else {
 			log.Println(err)
-			return false, false, "", err
+			return false, "", "", err
 		}
 
 	}
 
 	if encryption.CompareHashes([]byte(databasePassword), []byte(password)) {
-		return true, initialPasswordChanged, publicID, nil
+		return true, registrationStep, publicID, nil
 	}
 
-	return false, false, "", nil
+	return false, "", "", nil
 }
 
 func (repository *EmployerRepository) UpdateEmployerPassword(publicID, password, newPassword string) (bool, error) {
@@ -150,16 +176,16 @@ func (repository *EmployerRepository) UpdateEmployerPassword(publicID, password,
 	if publicID == "" || password == "" || newPassword == "" {
 		return false, nil
 	}
-	var databasePassword string
+	var databasePassword, registrationStep string
 
-	stmt, err := repository.Database.Prepare(`SELECT password FROM employers WHERE publicid=$1;`)
+	stmt, err := repository.Database.Prepare(`SELECT password, registrationstep FROM employers WHERE publicid=$1;`)
 
 	if err != nil {
 		log.Println(err)
 		return false, err
 	}
 
-	err = stmt.QueryRow(publicID).Scan(&databasePassword)
+	err = stmt.QueryRow(publicID).Scan(&databasePassword, &registrationStep)
 
 	if err != nil {
 
@@ -173,7 +199,24 @@ func (repository *EmployerRepository) UpdateEmployerPassword(publicID, password,
 	}
 
 	if encryption.CompareHashes([]byte(databasePassword), []byte(password)) {
-		stmt, err = repository.Database.Prepare(`UPDATE employers SET password=$1, initialpasswordchanged=true WHERE publicid=$2;`)
+
+		if registrationStep == ChangePassword.String() {
+			stmt, err = repository.Database.Prepare(`UPDATE employers SET registrationstep='personal-information' WHERE publicid=$1;`)
+
+			if err != nil {
+				log.Println(err)
+				return false, err
+			}
+
+			_, err = stmt.Exec(publicID)
+
+			if err != nil {
+				log.Println(err)
+				return false, err
+			}
+
+		}
+		stmt, err = repository.Database.Prepare(`UPDATE employers SET password=$1 WHERE publicid=$2;`)
 
 		if err != nil {
 			log.Println(err)
@@ -248,7 +291,7 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 	return Employer, nil
 }
 
-func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
+func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
 
 	if jobTitle == "" {
 		return nil, errors.New("data cannot be empty")
@@ -258,9 +301,9 @@ func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTit
 
 	stmt, err := repository.Database.Prepare(`
 		INSERT INTO 
-		jobs(title, streetaddress, city, zipcode, tags, description, minsalary, 
+		jobs(title, jobtype, category, description, minsalary, 
 				maxsalary, payperiod, poststartdatetime, postenddatetime, employerid) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, (SELECT id FROM employers WHERE publicid=$12)) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, (SELECT id FROM employers WHERE publicid=$10)) 
 		RETURNING publicid;`)
 
 	if err != nil {
@@ -268,7 +311,7 @@ func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTit
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription, minSalary, maxSalary, payPeriod, postStartDatetime, postEndDatetime, employerPublicID).Scan(&job.PublicID)
+	err = stmt.QueryRow(jobTitle, jobType, category, jobDescription, minSalary, maxSalary, payPeriod, postStartDatetime, postEndDatetime, employerPublicID).Scan(&job.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -287,7 +330,7 @@ func (repository *EmployerRepository) GetJob(jobPublicID string) (*Job, error) {
 	var job Job
 
 	stmt, err := repository.Database.Prepare(`
-		SELECT jobs.title, jobs.city, jobs.streetaddress, jobs.zipcode, jobs.tags, jobs.description, 
+		SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
 			jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime,
 			jobs.postenddatetime, employers.publicid
 		FROM jobs

@@ -239,11 +239,11 @@ func Test_EmployerRepository_AuthenticateEmployerPassword_IncorrectDataReceived_
 
 	_ = testhelper.Helper_CreateEmployer(employer, t)
 
-	result, initialpasswordchanged, publicid, err := repository.AuthenticateEmployerPassword(data["email"], data["password"])
+	result, registrationStep, publicid, err := repository.AuthenticateEmployerPassword(data["email"], data["password"])
 
 	assert.False(result)
 	assert.Nil(err)
-	assert.False(initialpasswordchanged)
+	assert.Equal("", registrationStep)
 	assert.Equal("", publicid)
 
 }
@@ -378,10 +378,8 @@ func Test_EmployerRepository_EmployerCreateJob_IncorrectData(t *testing.T) {
 
 	data := map[string]string{
 		"title":             "",
-		"streetaddress":     "123 Street Avenue",
-		"city":              "City",
-		"zipcode":           "00000",
-		"tags":              "full-time,remote-friendly",
+		"jobtype":           "full-time",
+		"category":          "full-stack",
 		"description":       "This is a new job",
 		"payperiod":         "year",
 		"poststartdatetime": time.Now().String(),
@@ -391,7 +389,7 @@ func Test_EmployerRepository_EmployerCreateJob_IncorrectData(t *testing.T) {
 	minSalary := 10000
 	maxSalary := 100000
 
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["streetaddress"], data["city"], data["zipcode"], data["tags"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
 
 	assert.NotNil(err)
 	assert.Nil(job)
@@ -406,10 +404,8 @@ func Test_EmployerRepository_EmployerCreateJob_CorrectData(t *testing.T) {
 
 	data := map[string]string{
 		"title":             "Job Title",
-		"streetaddress":     "123 Street Avenue",
-		"city":              "City",
-		"zipcode":           "00000",
-		"tags":              "full-time,remote-friendly",
+		"jobtype":           "full-time",
+		"category":          "full-stack",
 		"description":       "This is a new job",
 		"payperiod":         "year",
 		"poststartdatetime": time.Now().Format(time.RFC3339),
@@ -418,7 +414,7 @@ func Test_EmployerRepository_EmployerCreateJob_CorrectData(t *testing.T) {
 
 	minSalary := 10000
 	maxSalary := 100000
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["streetaddress"], data["city"], data["zipcode"], data["tags"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
 
 	assert.NotNil(job)
 	assert.Nil(err)

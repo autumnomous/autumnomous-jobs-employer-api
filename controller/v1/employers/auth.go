@@ -32,7 +32,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	match, initialPasswordChanged, publicID, err := AuthenticationFunction(credentials.Email, credentials.Password)
+	match, registrationStep, publicID, err := AuthenticationFunction(credentials.Email, credentials.Password)
 
 	if err != nil {
 		log.Println(err)
@@ -53,8 +53,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		encodedTokenStr := base64.StdEncoding.EncodeToString([]byte(tokenStr))
 
 		token := map[string]interface{}{
-			"token":                  encodedTokenStr,
-			"initialpasswordchanged": initialPasswordChanged,
+			"token":            encodedTokenStr,
+			"registrationstep": registrationStep,
 		}
 		response.SendJSON(w, token)
 		return
@@ -65,18 +65,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func AuthenticatePassword(email, password string) (bool, bool, string, error) {
+func AuthenticatePassword(email, password string) (bool, string, string, error) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	match, initialPasswordChanged, publicID, err := repository.AuthenticateEmployerPassword(email, password)
+	match, registrationStep, publicID, err := repository.AuthenticateEmployerPassword(email, password)
 
 	if err != nil {
 		log.Println(err)
-		return false, initialPasswordChanged, "", err
+		return false, "", "", err
 	}
 
-	return match, initialPasswordChanged, publicID, nil
+	return match, registrationStep, publicID, nil
 
 }
 
