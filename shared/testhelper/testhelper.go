@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"testing"
 	"time"
 
@@ -39,10 +38,8 @@ type TestEmployer struct {
 type TestJob struct {
 	PublicID          string `jaon:"publicid"`
 	Title             string `json:"title"`
-	City              string `json:"city"`
-	StreetAddress     string `json:"streetaddress"`
-	ZipCode           string `json:"zipcode"`
-	Tags              string `json:"tags"`
+	JobType           string `json:"jobtype"`
+	Category          string `json:"category"`
 	Description       string `json:"description"` // make required?
 	EmployerPublicID  string `json:"employerpublicid"`
 	MinSalary         int    `json:"minsalary"`
@@ -182,15 +179,15 @@ func Helper_RandomApplicant(t *testing.T) *TestUser {
 
 func Helper_CreateJob(job *TestJob, t *testing.T) *TestJob {
 	stmt, err := database.DB.Prepare(`INSERT INTO 
-											jobs(title, streetaddress, city, zipcode, tags, description,minsalary, maxsalary, payperiod, poststartdatetime, postenddatetime, employerid) 
-											VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, (SELECT id FROM employers WHERE publicid=$12)) 
+											jobs(title, jobtype, category, description,minsalary, maxsalary, payperiod, poststartdatetime, postenddatetime, employerid) 
+											VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, (SELECT id FROM employers WHERE publicid=$10)) 
 											RETURNING publicid;`)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 
-	err = stmt.QueryRow(job.Title, job.StreetAddress, job.City, job.ZipCode, job.Tags, job.Description, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PostStartDatetime, job.PostEndDatetime, job.EmployerPublicID).Scan(&job.PublicID)
+	err = stmt.QueryRow(job.Title, job.JobType, job.Category, job.Description, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PostStartDatetime, job.PostEndDatetime, job.EmployerPublicID).Scan(&job.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -204,10 +201,8 @@ func Helper_RandomJob(employer *TestEmployer, t *testing.T) *TestJob {
 
 	job := &TestJob{
 		Title:             string(encryption.GeneratePassword(5)),
-		City:              string(encryption.GeneratePassword(5)),
-		StreetAddress:     string(encryption.GeneratePassword(5)),
-		ZipCode:           string(encryption.GeneratePassword(5)),
-		Tags:              strings.Join([]string{string(encryption.GeneratePassword(5)), string(encryption.GeneratePassword(5)), string(encryption.GeneratePassword(5))}, ","),
+		JobType:           string(encryption.GeneratePassword(5)),
+		Category:          string(encryption.GeneratePassword(5)),
 		Description:       string(encryption.GeneratePassword(5)),
 		MinSalary:         0,
 		MaxSalary:         100,

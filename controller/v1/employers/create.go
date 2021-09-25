@@ -1,29 +1,21 @@
 package employers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
 )
 
-// "jobtitle":          "",
-// 			"jobstreetaddress":  "",
-// 			"jobcity":           "",
-// 			"jobzipcode":        "",
-// 			"jobtype":           "",
-// 			"jobremotefriendly": "",
-// 			"jobdescription":    "",
-
 type createJobDetails struct {
 	Title             string `json:"title"`
-	StreetAddress     string `json:"streetaddress"`
-	City              string `json:"city"`
-	ZipCode           string `json:"zipcode"`
-	Tags              string `json:"tags"`
+	JobType           string `json:"jobtype"`
+	Category          string `json:"category"`
 	Description       string `json:"description"` // make required?
 	MinSalary         int    `json:"minsalary"`
 	MaxSalary         int    `json:"maxsalary"`
@@ -49,7 +41,8 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenClaims, err := jwt.GetStrClaims(r)
+	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
+	authKey, err := base64.StdEncoding.DecodeString(auth)
 
 	if err != nil {
 		log.Println(err)
@@ -57,11 +50,21 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicID := tokenClaims["user"]
+	tokenClaims, err := jwt.ParseToken(string(authKey))
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	publicID := tokenClaims.CustomClaims["user"]
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	job, err := repository.EmployerCreateJob(publicID, jobDetails.Title, jobDetails.StreetAddress, jobDetails.City, jobDetails.ZipCode, jobDetails.Tags, jobDetails.Description, jobDetails.PostStartDatetime, jobDetails.PostEndDatetime, jobDetails.PayPeriod, jobDetails.MinSalary, jobDetails.MaxSalary)
+	// TODO: jobDetails.PostEndDatetime = jobDetails.PostStartDatetime + 30 days
+
+	job, err := repository.EmployerCreateJob(publicID, jobDetails.Title, jobDetails.JobType, jobDetails.Category, jobDetails.Description, jobDetails.PostStartDatetime, jobDetails.PostEndDatetime, jobDetails.PayPeriod, jobDetails.MinSalary, jobDetails.MaxSalary)
 
 	if err != nil {
 		log.Println(err)

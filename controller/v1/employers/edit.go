@@ -1,9 +1,11 @@
 package employers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/response"
@@ -12,10 +14,8 @@ import (
 
 type editJobDetails struct {
 	Title             string `json:"title"`
-	StreetAddress     string `json:"streetaddress"`
-	City              string `json:"city"`
-	ZipCode           string `json:"zipcode"`
-	Tags              string `json:"tags"`
+	JobType           string `json:"jobtype"`
+	Category          string `json:"category"`
 	Description       string `json:"description"` // make required?
 	MinSalary         int    `json:"minsalary"`
 	MaxSalary         int    `json:"maxsalary"`
@@ -37,7 +37,8 @@ func EditJob(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(&details)
 
-	tokenClaims, err := jwt.GetStrClaims(r)
+	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
+	authKey, err := base64.StdEncoding.DecodeString(auth)
 
 	if err != nil {
 		log.Println(err)
@@ -45,11 +46,19 @@ func EditJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicID := tokenClaims["user"]
+	tokenClaims, err := jwt.ParseToken(string(authKey))
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	publicID := tokenClaims.CustomClaims["user"]
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	job, err := repository.EditJob(publicID, details.PublicID, details.Title, details.StreetAddress, details.City, details.ZipCode, details.Tags, details.Description, details.PostStartDatetime, details.PostEndDatetime, details.PayPeriod, details.MinSalary, details.MaxSalary)
+	job, err := repository.EditJob(publicID, details.PublicID, details.Title, details.JobType, details.Category, details.Description, details.PostStartDatetime, details.PostEndDatetime, details.PayPeriod, details.MinSalary, details.MaxSalary)
 
 	if err != nil {
 		log.Println(err)
