@@ -14,8 +14,10 @@ import (
 
 func ValidateMyJWT(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+
 		s := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
 		if len(s) == 2 {
+
 			b, err := base64.StdEncoding.DecodeString(s[1])
 
 			if err == nil {

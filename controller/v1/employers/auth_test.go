@@ -43,8 +43,8 @@ func Test_ApplicantLogin_Success(t *testing.T) {
 		t.Fatal()
 	}
 
-	employers.AuthenticationFunction = func(email, password string) (bool, bool, string, error) {
-		return true, true, "", nil
+	employers.AuthenticationFunction = func(email, password string) (bool, string, string, error) {
+		return true, "", "", nil
 	}
 
 	defer func() {

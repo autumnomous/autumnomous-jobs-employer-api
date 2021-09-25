@@ -2,11 +2,8 @@ package jwt
 
 import (
 	"errors"
-	"fmt"
 	"log"
-	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
@@ -79,55 +76,4 @@ func ParseToken(inputTokenString string) (*JWTData, error) {
 
 	return claims.Claims.(*JWTData), nil
 
-}
-
-// GetClaims returns the jwt claims as a map
-func GetClaims(r *http.Request) (*JWTData, error) {
-	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
-	// log.Println(auth)
-	// authKey, err := base64.StdEncoding.DecodeString(auth)
-
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return nil, err
-	// }
-
-	claims, err := ParseToken(auth)
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return claims, nil
-}
-
-// GetStrClaims returns the jwt claims as a map of strings
-func GetStrClaims(r *http.Request) (map[string]string, error) {
-
-	if r.Header.Get("Authorization") == "" {
-		return nil, errors.New("a token is required for this action")
-	}
-
-	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
-	// authKey, err := base64.StdEncoding.DecodeString(auth)
-	// if err != nil {
-	// 	log.Println(err)
-	// 	return nil, err
-	// }
-
-	claims, err := ParseToken(auth)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	strClaims := make(map[string]string)
-
-	strClaims["user"] = fmt.Sprintf("%v", claims.CustomClaims["user"])
-	// strClaims["exp"] = fmt.Sprintf("%v", claims["exp"])
-	// strClaims["iat"] = fmt.Sprintf("%v", claims["iat"])
-	// strClaims["nbf"] = fmt.Sprintf("%v", claims["nbf"])
-
-	return strClaims, nil
 }
