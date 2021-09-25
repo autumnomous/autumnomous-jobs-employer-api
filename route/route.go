@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"bit-jobs-api/controller/v1/employers"
+	"bit-jobs-api/controller/v1/utilities"
 	"bit-jobs-api/route/middleware/acl"
 	"bit-jobs-api/route/middleware/cors"
 	hr "bit-jobs-api/route/middleware/httprouterwrapper"
@@ -27,9 +28,14 @@ func LoadRoutes() http.Handler {
 func routes() *httprouter.Router {
 	r := httprouter.New()
 
+	r.POST("/upload/image", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(utilities.UploadImage)))
+
 	r.POST("/employer/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.SignUp)))
 	r.POST("/employer/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.Login)))
+
 	r.POST("/employer/update-password", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdatePassword)))
+	r.POST("/employer/update-account", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdateAccount)))
+
 	r.GET("/employer/get", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetEmployer)))
 	r.POST("/employer/create/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.CreateJob)))
 	r.POST("/employer/edit/job", hr.Handler(alice.New(acl.ValidateMyJWT, acl.ValidateMyJWT).ThenFunc(employers.EditJob)))

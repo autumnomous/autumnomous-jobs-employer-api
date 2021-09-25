@@ -347,7 +347,7 @@ func Test_EmployerRepository_UpdateEmployerAccount_CorrectData(t *testing.T) {
 		"publicid":  Employer.PublicID,
 	}
 
-	updatedEmployer, err := repository.UpdateEmployerAccount(data["publicid"], data["firstname"], data["lastname"], data["email"])
+	updatedEmployer, err := repository.UpdateEmployerAccount(data["publicid"], data["firstname"], data["lastname"], data["email"], "", "", "")
 
 	assert.NotNil(updatedEmployer)
 	assert.Nil(err)
@@ -444,11 +444,8 @@ func Test_EmployerRepository_GetJob_CorrectData(t *testing.T) {
 
 	job, err := repository.GetJob(testjob.PublicID)
 
-	assert.Equal(testjob.City, job.City)
 	assert.Equal(testjob.Title, job.Title)
-	assert.Equal(testjob.StreetAddress, job.StreetAddress)
 	assert.Equal(testjob.EmployerPublicID, job.EmployerPublicID)
-	assert.Equal(testjob.Tags, job.Tags)
 	assert.Nil(err)
 
 }
@@ -536,7 +533,7 @@ func Test_EmployerRepository_EditJob_MissingJobPublicID(t *testing.T) {
 
 	employer := testhelper.Helper_RandomEmployer(t)
 
-	job, err := repository.EditJob(employer.PublicID, "", "", "", "", "", "", "", "", "", "", 0, 0)
+	job, err := repository.EditJob(employer.PublicID, "", "", "", "", "", "", "", "", 0, 0)
 
 	assert.Nil(job)
 	assert.NotNil(err)
@@ -548,7 +545,7 @@ func Test_EmployerRepository_EditJob_MissingEmployerPublicID(t *testing.T) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	job, err := repository.EditJob("", "", "", "", "", "", "", "", "", "", "", 0, 0)
+	job, err := repository.EditJob("", "", "", "", "", "", "", "", "", 0, 0)
 
 	assert.Nil(job)
 	assert.NotNil(err)
@@ -564,11 +561,10 @@ func Test_EmployerRepository_EditJob_Correct(t *testing.T) {
 
 	job := testhelper.Helper_RandomJob(employer, t)
 
-	result, err := repository.EditJob(employer.PublicID, job.PublicID, "A Job", "123 Street", "City", "00000", "full-time,remote", "this is a job", "2021-09-04", "2021-10-01", "hourly", 40, 50)
+	result, err := repository.EditJob(employer.PublicID, job.PublicID, "A Job", "full-time", "full-stack", "this is a job", "2021-09-04", "2021-10-01", "hourly", 40, 50)
 
 	assert.NotNil(result)
 	assert.Equal(result.Title, "A Job")
-	assert.Equal(result.StreetAddress, "123 Street")
 	assert.Nil(err)
 }
 

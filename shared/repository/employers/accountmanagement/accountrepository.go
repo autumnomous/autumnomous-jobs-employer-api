@@ -18,7 +18,11 @@ type Employer struct {
 	FirstName              string `json:"firstname"`
 	LastName               string `json:"lastname"`
 	Email                  string `json:"email"`
+	PhoneNumber            string `json:"phonenumber"`
+	MobileNumber           string `json:"mobilenumber"`
+	Role                   string `json:"role"`
 	TotalPostsBought       int    `json:"totalpostsbought"`
+	RegistrationStep       string `json:"registrationstep"`
 	Password               string
 	CompanyPublicID        string `json:"companypublicid"`
 	PublicID               string `json:"publicid"`
@@ -28,10 +32,8 @@ type Employer struct {
 type Job struct {
 	PublicID          string `json:"publicid"`
 	Title             string `json:"title"`
-	City              string `json:"city"`
-	StreetAddress     string `json:"streetaddress"`
-	ZipCode           string `json:"zipcode"`
-	Tags              string `json:"tags"`
+	JobType           string `json:"jobtype"`
+	Category          string `json:"category"`
 	Description       string `json:"description"` // make required?
 	EmployerPublicID  string `json:"employerpublicid"`
 	MinSalary         int    `json:"minsalary"`
@@ -115,7 +117,7 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 	var employer Employer
 
 	stmt, err := repository.Database.Prepare(`
-		SELECT firstname, lastname, email, totalpostsbought
+		SELECT firstname, lastname, email, totalpostsbought, registrationstep
 		FROM employers
 		WHERE publicid=$1;`,
 	)
@@ -125,7 +127,7 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 		return nil, err
 	}
 
-	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought)
+	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought, &employer.RegistrationStep)
 
 	if err != nil {
 		log.Println(err)
@@ -243,7 +245,7 @@ func (repository *EmployerRepository) UpdateEmployerPassword(publicID, password,
 	}
 }
 
-func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName, lastName, email string) (*Employer, error) {
+func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName, lastName, email, phoneNumber, mobileNumber, role string) (*Employer, error) {
 
 	Employer := &Employer{}
 
@@ -273,19 +275,40 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 		Employer.Email = email
 	}
 
+	if phoneNumber != "" {
+		Employer.PhoneNumber = phoneNumber
+	}
+
+	if mobileNumber != "" {
+		Employer.MobileNumber = mobileNumber
+	}
+
+	if role != "" {
+		Employer.Role = role
+	}
+
 	Employer.PublicID = publicID
-	stmt, err = repository.Database.Prepare(`UPDATE employers SET firstname=$1, lastname=$2, email=$3 WHERE publicid=$4;`)
+	stmt, err = repository.Database.Prepare(`UPDATE employers SET firstname=$1, lastname=$2, email=$3, phonenumber=$4, mobilenumber=$5, role=$6 WHERE publicid=$7;`)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	_, err = stmt.Exec(Employer.FirstName, Employer.LastName, Employer.Email, Employer.PublicID)
+	_, err = stmt.Exec(Employer.FirstName, Employer.LastName, Employer.Email, Employer.PhoneNumber, Employer.MobileNumber, Employer.Role, Employer.PublicID)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
+	}
+
+	emp, _ := repository.GetEmployer(publicID)
+
+	if emp.RegistrationStep == PersonalInformation.String() {
+		stmt, _ = repository.Database.Prepare(`UPDATE employers SET registrationstep='company-details' WHERE publicid=$1;`)
+
+		stmt.Exec(publicID)
+
 	}
 
 	return Employer, nil
@@ -343,7 +366,7 @@ func (repository *EmployerRepository) GetJob(jobPublicID string) (*Job, error) {
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.City, &job.StreetAddress, &job.ZipCode, &job.Tags, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.EmployerPublicID)
+	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.EmployerPublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -365,7 +388,7 @@ func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) (
 	var employerTotalPostsBought int
 
 	stmt, err := repository.Database.Prepare(`
-			SELECT jobs.title, jobs.tags, jobs.description, 
+			SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
 				jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime, jobs.postenddatetime, jobs.publicid,
 				employers.totalpostsbought
 			FROM jobs
@@ -388,7 +411,7 @@ func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) (
 	for rows.Next() {
 		job := &Job{}
 
-		err := rows.Scan(&job.Title, &job.Tags, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.PublicID, &employerTotalPostsBought)
+		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.PublicID, &employerTotalPostsBought)
 
 		if err != nil {
 			log.Println(err)
@@ -410,14 +433,14 @@ func (repository *EmployerRepository) DeleteJob(employerPublicID, jobPublicID st
 
 	var job Job
 
-	stmt, err := repository.Database.Prepare(`DELETE FROM jobs WHERE publicid=$1 AND employerid=(SELECT id FROM employers WHERE publicid=$2) RETURNING title, city, streetaddress, zipcode,tags, description;`)
+	stmt, err := repository.Database.Prepare(`DELETE FROM jobs WHERE publicid=$1 AND employerid=(SELECT id FROM employers WHERE publicid=$2) RETURNING title, jobtype, category, description;`)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobPublicID, employerPublicID).Scan(&job.Title, &job.City, &job.StreetAddress, &job.ZipCode, &job.Tags, &job.Description)
+	err = stmt.QueryRow(jobPublicID, employerPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description)
 
 	if err != nil {
 		log.Println(err)
@@ -427,7 +450,7 @@ func (repository *EmployerRepository) DeleteJob(employerPublicID, jobPublicID st
 	return &job, nil
 }
 
-func (repository *EmployerRepository) EditJob(employerPublicID, jobPublicID, jobTitle, jobStreetAddress, jobCity, jobZipCode, jobTags, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
+func (repository *EmployerRepository) EditJob(employerPublicID, jobPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
 
 	if employerPublicID == "" || jobPublicID == "" {
 		return nil, errors.New("missing required value")
@@ -443,20 +466,12 @@ func (repository *EmployerRepository) EditJob(employerPublicID, jobPublicID, job
 		job.Title = jobTitle
 	}
 
-	if jobStreetAddress != "" {
-		job.StreetAddress = jobStreetAddress
+	if jobType != "" {
+		job.JobType = jobType
 	}
 
-	if jobCity != "" {
-		job.City = jobCity
-	}
-
-	if jobZipCode != "" {
-		job.ZipCode = jobZipCode
-	}
-
-	if jobTags != "" {
-		job.Tags = jobTags
+	if category != "" {
+		job.Category = category
 	}
 
 	if jobDescription != "" {
@@ -482,13 +497,13 @@ func (repository *EmployerRepository) EditJob(employerPublicID, jobPublicID, job
 	if payPeriod != "" {
 		job.PayPeriod = payPeriod
 	}
-	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, streetaddress=$2, city=$3, zipcode=$4, tags=$5, description=$6 , poststartdatetime=$7, postenddatetime=$8, minsalary=$9, maxsalary=$10, payperiod=$11 WHERE publicid=$12 AND employerid=(SELECT id FROM employers WHERE publicid=$13);`)
+	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, jobtype=$2, category=$3, description=$4, poststartdatetime=$5, postenddatetime=$6, minsalary=$7, maxsalary=$8, payperiod=$9 WHERE publicid=$10 AND employerid=(SELECT id FROM employers WHERE publicid=$11);`)
 
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = stmt.Exec(job.Title, job.StreetAddress, job.City, job.ZipCode, job.Tags, job.Description, job.PostStartDatetime, job.PostEndDatetime, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PublicID, employerPublicID)
+	_, err = stmt.Exec(job.Title, job.JobType, job.Category, job.Description, job.PostStartDatetime, job.PostEndDatetime, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PublicID, employerPublicID)
 
 	if err != nil {
 		return nil, err

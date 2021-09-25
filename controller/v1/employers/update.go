@@ -1,9 +1,11 @@
 package employers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/response"
@@ -17,10 +19,13 @@ type updatePasswordCredentials struct {
 }
 
 type updateAccountData struct {
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Email     string `json:"email"`
-	Bio       string `json:"bio"`
+	FirstName    string `json:"firstname"`
+	LastName     string `json:"lastname"`
+	Email        string `json:"email"`
+	PhoneNumber  string `json:"phonenumber"`
+	MobileNumber string `json:"mobilenumber"`
+	Role         string `json:"role"`
+	// Bio          string `json:"bio"`
 }
 
 func UpdatePassword(w http.ResponseWriter, r *http.Request) {
@@ -45,7 +50,8 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenClaims, err := jwt.GetStrClaims(r)
+	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
+	authKey, err := base64.StdEncoding.DecodeString(auth)
 
 	if err != nil {
 		log.Println(err)
@@ -53,7 +59,16 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicID := tokenClaims["user"]
+	tokenClaims, err := jwt.ParseToken(string(authKey))
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	publicID := tokenClaims.CustomClaims["user"]
+	log.Println(publicID)
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
@@ -82,7 +97,8 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokenClaims, err := jwt.GetStrClaims(r)
+	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
+	authKey, err := base64.StdEncoding.DecodeString(auth)
 
 	if err != nil {
 		log.Println(err)
@@ -90,7 +106,15 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	publicID := tokenClaims["user"]
+	tokenClaims, err := jwt.ParseToken(string(authKey))
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	publicID := tokenClaims.CustomClaims["user"]
 
 	var data updateAccountData
 	decoder := json.NewDecoder(r.Body)
@@ -104,7 +128,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	employer, err := repository.UpdateEmployerAccount(publicID, data.FirstName, data.LastName, data.Email)
+	employer, err := repository.UpdateEmployerAccount(publicID, data.FirstName, data.LastName, data.Email, data.PhoneNumber, data.MobileNumber, data.Role)
 
 	if err != nil {
 		log.Println(err)
