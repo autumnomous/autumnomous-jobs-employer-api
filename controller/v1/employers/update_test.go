@@ -2,6 +2,7 @@ package employers_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -17,7 +18,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_ApplicantUpdate_UpdatePassword_Success(t *testing.T) {
+func Test_Employer_UpdatePassword_Success(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -26,10 +27,9 @@ func Test_ApplicantUpdate_UpdatePassword_Success(t *testing.T) {
 	data := map[string]string{
 		"password":    string(encryption.GeneratePassword(9)),
 		"newpassword": string(encryption.GeneratePassword(9)),
-		"token":       "",
 	}
 
-	applicant := &testhelper.TestUser{FirstName: "First", LastName: "Last", Email: fmt.Sprintf("email-%s@site.com", encryption.GeneratePassword(9))}
+	employer := &testhelper.TestEmployer{FirstName: "First", LastName: "Last", Email: fmt.Sprintf("email-%s@site.com", encryption.GeneratePassword(9))}
 
 	hashedPassword, err := encryption.HashPassword([]byte(data["password"]))
 
@@ -37,11 +37,11 @@ func Test_ApplicantUpdate_UpdatePassword_Success(t *testing.T) {
 		t.Fatal()
 	}
 
-	applicant.HashedPassword = hashedPassword
+	employer.HashedPassword = hashedPassword
 
-	applicant = testhelper.Helper_CreateApplicant(applicant, t)
+	employer = testhelper.Helper_CreateEmployer(employer, t)
 
-	token, err := jwt.GenerateToken(applicant.PublicID)
+	token, err := jwt.GenerateToken(employer.PublicID)
 
 	if err != nil {
 		t.Fatal()
@@ -59,6 +59,7 @@ func Test_ApplicantUpdate_UpdatePassword_Success(t *testing.T) {
 		t.Fatal()
 	}
 
+	token = base64.StdEncoding.EncodeToString([]byte(token))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+token)
 
@@ -81,7 +82,7 @@ func Test_ApplicantUpdate_UpdatePassword_Success(t *testing.T) {
 	assert.Equal(int(http.StatusOK), response.StatusCode)
 }
 
-func Test_ApplicantUpdate_UpdatePassword_IncorrectMethod(t *testing.T) {
+func Test_Employer_UpdatePassword_IncorrectMethod(t *testing.T) {
 	assert := assert.New(t)
 
 	ts := httptest.NewServer(http.HandlerFunc(employers.UpdatePassword))
@@ -120,7 +121,7 @@ func Test_ApplicantUpdate_UpdatePassword_IncorrectMethod(t *testing.T) {
 		assert.Equal(http.StatusMethodNotAllowed, response.StatusCode)
 	}
 }
-func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoPassword(t *testing.T) {
+func Test_Employer_UpdatePassword_IncorrectDataReceived_NoPassword(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -155,7 +156,7 @@ func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoPassword(t *tes
 
 }
 
-func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoNewPassword(t *testing.T) {
+func Test_Employer_UpdatePassword_IncorrectDataReceived_NoNewPassword(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -190,7 +191,7 @@ func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoNewPassword(t *
 
 }
 
-func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoToken(t *testing.T) {
+func Test_Employer_UpdatePassword_IncorrectDataReceived_NoToken(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -215,6 +216,17 @@ func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoToken(t *testin
 
 	httpClient := &http.Client{}
 
+	token, err := jwt.GenerateToken("")
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
 	response, err := httpClient.Do(request)
 
 	if err != nil {
@@ -225,7 +237,7 @@ func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoToken(t *testin
 
 }
 
-func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoData(t *testing.T) {
+func Test_Employer_UpdatePassword_IncorrectDataReceived_NoData(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -260,7 +272,7 @@ func Test_ApplicantUpdate_UpdatePassword_IncorrectDataReceived_NoData(t *testing
 
 }
 
-func Test_ApplicantUpdate_UpdateAccount_IncorrectDataReceived_NoToken(t *testing.T) {
+func Test_Employer_UpdateAccount_IncorrectDataReceived_NoToken(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -274,60 +286,62 @@ func Test_ApplicantUpdate_UpdateAccount_IncorrectDataReceived_NoToken(t *testing
 	}
 
 	httpClient := http.Client{}
+
+	token, err := jwt.GenerateToken("")
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
 	response, err := httpClient.Do(request)
 
 	assert.Nil(err)
 	assert.Equal(int(http.StatusBadRequest), response.StatusCode)
 }
 
-func Test_ApplicantUpdate_UpdateAccount_CorrectDataReceived(t *testing.T) {
+func Test_Employer_UpdateAccount_CorrectDataReceived(t *testing.T) {
 
 	assert := assert.New(t)
 
 	ts := httptest.NewServer((http.HandlerFunc(employers.UpdateAccount)))
 
-	applicant := &testhelper.TestUser{FirstName: "First", LastName: "Last", Email: fmt.Sprintf("email-%s@site.com", encryption.GeneratePassword(9)), Password: string(encryption.GeneratePassword(9))}
+	employer := &testhelper.TestEmployer{FirstName: "First", LastName: "Last", Email: fmt.Sprintf("email-%s@site.com", encryption.GeneratePassword(9)), Password: string(encryption.GeneratePassword(9))}
 
-	hashedPassword, err := encryption.HashPassword([]byte(applicant.Password))
-
-	if err != nil {
-		t.Fatal()
-	}
-
-	applicant.HashedPassword = hashedPassword
-
-	applicant = testhelper.Helper_CreateApplicant(applicant, t)
-
-	token, err := jwt.GenerateToken(applicant.PublicID)
+	hashedPassword, err := encryption.HashPassword([]byte(employer.Password))
 
 	if err != nil {
 		t.Fatal()
 	}
+
+	employer.HashedPassword = hashedPassword
+
+	employer = testhelper.Helper_CreateEmployer(employer, t)
 
 	tests := map[string]map[string]string{
 		"NewBio": {
 			"firstname": "First",
 			"lastname":  "Last",
-			"email":     applicant.Email,
-			"bio":       "New Bio",
+			"email":     employer.Email,
 		},
 		"New First Name": {
 			"firstname": "NewFirst",
 			"lastname":  "Last",
-			"email":     applicant.Email,
-			"bio":       "New Bio",
+			"email":     employer.Email,
 		},
 		"New Last Name": {
 			"firstname": "NewFirst",
 			"lastname":  "NewLast",
-			"email":     applicant.Email,
-			"bio":       "New Bio",
+			"email":     employer.Email,
 		},
 		"New Email": {
 			"firstname": "NewFirst",
 			"lastname":  "NewLast",
 			"email":     fmt.Sprintf("new-email-%s@site.com", encryption.GeneratePassword(9)),
-			"bio":       "New Bio",
 		},
 	}
 
@@ -345,6 +359,13 @@ func Test_ApplicantUpdate_UpdateAccount_CorrectDataReceived(t *testing.T) {
 			t.Fatal()
 		}
 
+		token, err := jwt.GenerateToken(employer.PublicID)
+
+		if err != nil {
+			t.Fatal()
+		}
+
+		token = base64.StdEncoding.EncodeToString([]byte(token))
 		request.Header.Set("Content-Type", "application/json")
 		request.Header.Set("Authorization", "Bearer "+token)
 
@@ -365,12 +386,10 @@ func Test_ApplicantUpdate_UpdateAccount_CorrectDataReceived(t *testing.T) {
 			t.Fatal()
 		}
 
-		db_user := testhelper.Helper_GetUser(applicant.PublicID, t)
 		assert.Equal(int(http.StatusOK), response.StatusCode)
-		assert.Equal(db_user.FirstName, result["firstname"])
-		assert.Equal(db_user.LastName, result["lastname"])
-		assert.Equal(db_user.Email, result["email"])
-		assert.Equal(db_user.Biography, result["bio"])
+		assert.Equal(test["firstname"], result["firstname"])
+		assert.Equal(test["lastname"], result["lastname"])
+		assert.Equal(test["email"], result["email"])
 
 	}
 

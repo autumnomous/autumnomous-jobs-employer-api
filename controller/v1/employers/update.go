@@ -1,11 +1,9 @@
 package employers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 
 	"bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/response"
@@ -50,25 +48,12 @@ func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
-	authKey, err := base64.StdEncoding.DecodeString(auth)
+	publicID := jwt.GetUserClaim(r)
 
-	if err != nil {
-		log.Println(err)
+	if publicID == "" {
 		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
 		return
 	}
-
-	tokenClaims, err := jwt.ParseToken(string(authKey))
-
-	if err != nil {
-		log.Println(err)
-		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
-		return
-	}
-
-	publicID := tokenClaims.CustomClaims["user"]
-	log.Println(publicID)
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
@@ -97,28 +82,16 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
-	authKey, err := base64.StdEncoding.DecodeString(auth)
+	publicID := jwt.GetUserClaim(r)
 
-	if err != nil {
-		log.Println(err)
+	if publicID == "" {
 		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
 		return
 	}
-
-	tokenClaims, err := jwt.ParseToken(string(authKey))
-
-	if err != nil {
-		log.Println(err)
-		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
-		return
-	}
-
-	publicID := tokenClaims.CustomClaims["user"]
 
 	var data updateAccountData
 	decoder := json.NewDecoder(r.Body)
-	err = decoder.Decode(&data)
+	err := decoder.Decode(&data)
 
 	if err != nil {
 		log.Println(err)

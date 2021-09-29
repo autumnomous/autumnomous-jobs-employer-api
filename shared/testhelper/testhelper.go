@@ -1,6 +1,7 @@
 package testhelper
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -13,17 +14,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Applicant
-type TestUser struct {
-	FirstName      string
-	LastName       string
-	Email          string
-	Password       string
-	Biography      string
-	HashedPassword []byte
-	PublicID       string
-}
-
 type TestEmployer struct {
 	FirstName        string
 	LastName         string
@@ -33,6 +23,10 @@ type TestEmployer struct {
 	CompanyPublicID  string
 	HashedPassword   []byte
 	PublicID         string
+	RegistrationStep string
+	PhoneNumber      string
+	MobileNumber     string
+	Role             string
 }
 
 type TestJob struct {
@@ -68,6 +62,21 @@ type TestJobPackage struct {
 	Price        float64 `json:"price"`
 }
 
+type TestCompany struct {
+	Name         string `json:"name"`
+	Domain       string `json:"domain"`
+	Location     string `json:"location"`
+	URL          string `json:"url"`
+	Facebook     string `json:"facebook"`
+	Twitter      string `json:"twitter"`
+	Instagram    string `json:"instagram"`
+	Description  string `json:"description"`
+	Logo         string `json:"logo"`
+	ExtraDetails string `json:"extradetails"`
+	PublicID     string `json:"publicid"`
+	ID           string `json:"id"`
+}
+
 func Init() {
 	os.Clearenv()
 
@@ -80,46 +89,6 @@ func Init() {
 
 	database.Connect("DATABASE_URL")
 
-}
-
-func Helper_CreateApplicant(applicant *TestUser, t *testing.T) *TestUser {
-
-	stmt, err := database.DB.Prepare(`INSERT INTO users (firstname, lastname, email, password, accounttype) VALUES ($1, $2, $3, $4, 'applicant') RETURNING publicid;`)
-
-	if err != nil {
-		log.Println(err)
-		t.Fatal()
-	}
-
-	err = stmt.QueryRow(applicant.FirstName, applicant.LastName, applicant.Email, applicant.HashedPassword).Scan(&applicant.PublicID)
-
-	if err != nil {
-		log.Println(err)
-		t.Fatal()
-	}
-
-	return applicant
-
-}
-
-func Helper_GetUser(publicID string, t *testing.T) *TestUser {
-
-	stmt, err := database.DB.Prepare(`SELECT firstname, lastname, email, password, biography, publicid FROM users WHERE publicid=$1;`)
-
-	if err != nil {
-		log.Println(err)
-		t.Fatal()
-	}
-
-	user := &TestUser{}
-	err = stmt.QueryRow(publicID).Scan(&user.FirstName, &user.LastName, &user.Email, &user.Password, &user.Biography, &user.PublicID)
-
-	if err != nil {
-		log.Println(err)
-		t.Fatal()
-	}
-
-	return user
 }
 
 func Helper_CreateEmployer(employer *TestEmployer, t *testing.T) *TestEmployer {
@@ -139,8 +108,8 @@ func Helper_CreateEmployer(employer *TestEmployer, t *testing.T) *TestEmployer {
 	}
 
 	return employer
-
 }
+
 func Helper_RandomEmployer(t *testing.T) *TestEmployer {
 	employer := &TestEmployer{FirstName: string(encryption.GeneratePassword(5)),
 		LastName: string(encryption.GeneratePassword(5)),
@@ -156,25 +125,28 @@ func Helper_RandomEmployer(t *testing.T) *TestEmployer {
 	employer.HashedPassword = hashedPassword
 
 	return Helper_CreateEmployer(employer, t)
-
 }
 
-func Helper_RandomApplicant(t *testing.T) *TestUser {
-	applicant := &TestUser{FirstName: string(encryption.GeneratePassword(5)),
-		LastName: string(encryption.GeneratePassword(5)),
-		Email:    fmt.Sprintf("email-%s@site.com", string(encryption.GeneratePassword(9))),
-		Password: string(encryption.GeneratePassword(9))}
+func Helper_GetEmployer(publicID string, t *testing.T) *TestEmployer {
 
-	hashedPassword, err := encryption.HashPassword([]byte(applicant.Password))
+	stmt, err := database.DB.Prepare(`SELECT 
+			email, firstname, lastname, (SELECT publicid FROM companies WHERE id=companyid)
+		FROM employers 
+		WHERE publicid=$1;`)
 
 	if err != nil {
 		t.Fatal()
 	}
 
-	applicant.HashedPassword = hashedPassword
+	var employer TestEmployer
+	err = stmt.QueryRow(publicID).Scan(&employer.Email, &employer.FirstName, &employer.LastName, &employer.CompanyPublicID)
 
-	return Helper_CreateApplicant(applicant, t)
+	if err != nil {
+		log.Println(err)
+		t.Fatal()
+	}
 
+	return &employer
 }
 
 func Helper_CreateJob(job *TestJob, t *testing.T) *TestJob {
@@ -248,6 +220,64 @@ func Helper_RandomJobPackage(t *testing.T) *TestJobPackage {
 	}
 
 	return Helper_CreateJobPackage(pack, t)
+}
+
+func Helper_CreateCompany(company *TestCompany, t *testing.T) *TestCompany {
+
+	stmt, err := database.DB.Prepare(`INSERT INTO 
+			companies(domain, name, location, url, facebook, twitter, instagram, description, logo, extradetails) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+			RETURNING publicid;`)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	err = stmt.QueryRow(company.Domain, company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails).Scan(&company.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	return company
+}
+
+func Helper_RandomCompany(t *testing.T) *TestCompany {
+
+	company := &TestCompany{
+		Domain:    string(encryption.GeneratePassword(5)),
+		Name:      string(encryption.GeneratePassword(5)),
+		Location:  string(encryption.GeneratePassword(5)),
+		URL:       string(encryption.GeneratePassword(5)),
+		Facebook:  string(encryption.GeneratePassword(5)),
+		Twitter:   string(encryption.GeneratePassword(5)),
+		Instagram: string(encryption.GeneratePassword(5)),
+	}
+
+	return Helper_CreateCompany(company, t)
+}
+
+func Helper_SetEmployerCompany(employerPublicID, companyPublicID string) error {
+
+	if employerPublicID == "" || companyPublicID == "" {
+		return errors.New("missing required value")
+	}
+
+	stmt, err := database.DB.Prepare(`UPDATE employers SET companyid=(SELECT id FROM companies WHERE publicid=$1) WHERE publicid=$2;`)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(companyPublicID, employerPublicID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }
 
 // func Helper_ChangeRegistrationStep(step string, Applicant *TestUser, t *testing.T) error {

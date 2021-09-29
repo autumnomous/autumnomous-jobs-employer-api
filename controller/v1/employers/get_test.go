@@ -1,6 +1,7 @@
 package employers_test
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -8,11 +9,21 @@ import (
 	"testing"
 
 	"bit-jobs-api/controller/v1/employers"
+	"bit-jobs-api/shared/repository/employers/accountmanagement"
 	"bit-jobs-api/shared/services/security/jwt"
 	"bit-jobs-api/shared/testhelper"
 
 	"github.com/stretchr/testify/assert"
 )
+
+type JobsResponse struct {
+	Jobs             []*accountmanagement.Job `json:"jobs"`
+	TotalPostsBought int                      `json:"totalpostsbought"`
+}
+
+func init() {
+	testhelper.Init()
+}
 
 func Test_Employer_GetJobs_IncorrectPublicID(t *testing.T) {
 
@@ -26,6 +37,17 @@ func Test_Employer_GetJobs_IncorrectPublicID(t *testing.T) {
 	if err != nil {
 		t.Fatal()
 	}
+
+	token, err := jwt.GenerateToken("")
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
 
 	httpClient := &http.Client{}
 
@@ -65,6 +87,7 @@ func Test_Employer_GetJobs_IncorrectMethod(t *testing.T) {
 func Test_Employer_GetJobs_Correct(t *testing.T) {
 
 	assert := assert.New(t)
+
 	ts := httptest.NewServer(http.HandlerFunc(employers.GetJobs))
 
 	defer ts.Close()
@@ -72,6 +95,7 @@ func Test_Employer_GetJobs_Correct(t *testing.T) {
 	request, err := http.NewRequest("GET", ts.URL, nil)
 
 	if err != nil {
+		log.Println(err)
 		t.Fatal()
 	}
 
@@ -87,6 +111,8 @@ func Test_Employer_GetJobs_Correct(t *testing.T) {
 		t.Fatal()
 	}
 
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+token)
 
@@ -94,14 +120,21 @@ func Test_Employer_GetJobs_Correct(t *testing.T) {
 
 	response, err := httpClient.Do(request)
 
+	if err != nil {
+		log.Println(err)
+		t.Fatal()
+	}
+
 	decoder := json.NewDecoder(response.Body)
-	var result []map[string]string
+	var result JobsResponse
 
 	decoder.Decode(&result)
 
 	assert.Nil(err)
 	assert.Equal(int(http.StatusOK), response.StatusCode)
-	assert.Equal(len(result), 3)
+
+	assert.Equal(3, len(result.Jobs))
+	assert.Equal(0, result.TotalPostsBought)
 
 }
 
@@ -128,6 +161,7 @@ func Test_Employer_GetJobPackages_Correct(t *testing.T) {
 		t.Fatal()
 	}
 
+	token = base64.StdEncoding.EncodeToString([]byte(token))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+token)
 
@@ -139,9 +173,56 @@ func Test_Employer_GetJobPackages_Correct(t *testing.T) {
 	var result []map[string]string
 
 	decoder.Decode(&result)
-	log.Println(result)
 	assert.Nil(err)
 	assert.Equal(int(http.StatusOK), response.StatusCode)
 	assert.GreaterOrEqual(len(result), 1)
+
+}
+
+func Test_Employer_GetCompany_Correct(t *testing.T) {
+
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(employers.GetCompany))
+
+	defer ts.Close()
+
+	request, err := http.NewRequest("GET", ts.URL, nil)
+
+	if err != nil {
+		log.Println(err)
+		t.Fatal()
+	}
+
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	company := testhelper.Helper_RandomCompany(t)
+
+	err = testhelper.Helper_SetEmployerCompany(employer.PublicID, company.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		t.Fatal()
+	}
+
+	token, err := jwt.GenerateToken(employer.PublicID)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	httpClient := &http.Client{}
+
+	response, err := httpClient.Do(request)
+
+	decoder := json.NewDecoder(response.Body)
+	var result []map[string]string
+
+	decoder.Decode(&result)
+	assert.Nil(err)
+	assert.Equal(int(http.StatusOK), response.StatusCode)
 
 }

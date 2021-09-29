@@ -1,11 +1,9 @@
 package employers
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"log"
 	"net/http"
-	"strings"
 
 	"bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/response"
@@ -41,24 +39,7 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)[1]
-	authKey, err := base64.StdEncoding.DecodeString(auth)
-
-	if err != nil {
-		log.Println(err)
-		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
-		return
-	}
-
-	tokenClaims, err := jwt.ParseToken(string(authKey))
-
-	if err != nil {
-		log.Println(err)
-		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
-		return
-	}
-
-	publicID := tokenClaims.CustomClaims["user"]
+	publicID := jwt.GetUserClaim(r)
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 

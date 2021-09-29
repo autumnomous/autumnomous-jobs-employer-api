@@ -2,6 +2,7 @@ package employers_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -105,6 +106,7 @@ func Test_Employer_DeleteJob_Correct(t *testing.T) {
 		t.Fatal()
 	}
 
+	token = base64.StdEncoding.EncodeToString([]byte(token))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+token)
 

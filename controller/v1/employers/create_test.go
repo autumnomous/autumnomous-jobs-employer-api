@@ -2,6 +2,7 @@ package employers_test
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -100,11 +101,8 @@ func Test_Employer_CreateJob_CorrectData(t *testing.T) {
 
 	data := map[string]string{
 		"title":             fmt.Sprintf("New Job %s", encryption.GeneratePassword(9)),
-		"streetaddress":     "123 Street Avenue",
-		"city":              "City",
-		"zipcode":           "00000",
-		"type":              "full-time",
-		"remotefriendly":    "yes",
+		"jobtype":           "full-time",
+		"category":          "full-stack",
 		"description":       "This is a new job",
 		"payperiod":         "year",
 		"minsalary":         "10000",
@@ -132,6 +130,7 @@ func Test_Employer_CreateJob_CorrectData(t *testing.T) {
 		t.Fatal()
 	}
 
+	token = base64.StdEncoding.EncodeToString([]byte(token))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+token)
 

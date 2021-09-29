@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 
+	"bit-jobs-api/shared/repository/companies"
 	"bit-jobs-api/shared/services/security/encryption"
 
 	_ "github.com/lib/pq"
@@ -343,6 +344,55 @@ func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTit
 
 	return repository.GetJob(job.PublicID)
 
+}
+
+func (repository *EmployerRepository) SetEmployerCompany(employerPublicID, companyPublicID string) error {
+
+	if employerPublicID == "" || companyPublicID == "" {
+		return errors.New("missing required value")
+	}
+
+	stmt, err := repository.Database.Prepare(`UPDATE employers SET companyid=(SELECT id FROM companies WHERE publicid=$1) WHERE publicid=$2;`)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = stmt.Exec(companyPublicID, employerPublicID)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (repository *EmployerRepository) GetEmployerCompany(employerPublicID string) (*companies.Company, error) {
+
+	if employerPublicID == "" {
+		return nil, errors.New("missing required value")
+	}
+	var company companies.Company
+	stmt, err := repository.Database.Prepare(`
+				SELECT 
+					name, domain, location, url, facebook, twitter, instagram,
+					description, logo, extradetails, publicid
+				FROM companies 
+				WHERE id = (SELECT companyid FROM employers WHERE publicid=$1);`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Domain, &company.Location, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return &company, nil
 }
 
 func (repository *EmployerRepository) GetJob(jobPublicID string) (*Job, error) {

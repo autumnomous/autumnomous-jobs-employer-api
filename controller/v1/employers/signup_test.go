@@ -114,7 +114,7 @@ func Test_Employer_SignUp_CorrectData(t *testing.T) {
 	data, err := json.Marshal(map[string]string{
 		"firstname": "First",
 		"lastname":  "Last",
-		"email":     fmt.Sprintf("email-%s@gmail.com", encryption.GeneratePassword(9)),
+		"email":     fmt.Sprintf("email-%s@site.com", encryption.GeneratePassword(9)),
 	})
 
 	if err != nil {
@@ -143,7 +143,7 @@ func Test_Employer_SignUp_CorrectData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var result map[string]interface{}
+	var result string
 	decoder := json.NewDecoder(response.Body)
 
 	err = decoder.Decode(&result)
@@ -152,7 +152,6 @@ func Test_Employer_SignUp_CorrectData(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Contains(result, "publicid")
 	assert.Nil(err)
 
 }

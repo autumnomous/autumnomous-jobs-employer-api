@@ -19,7 +19,7 @@ func init() {
 	testhelper.Init()
 }
 
-func Test_ApplicantLogin_Success(t *testing.T) {
+func Test_EmployerLogin_Success(t *testing.T) {
 	assert := assert.New(t)
 
 	ts := httptest.NewServer(http.HandlerFunc(employers.Login))
@@ -72,7 +72,7 @@ func Test_ApplicantLogin_Success(t *testing.T) {
 	assert.NotNil(result)
 }
 
-func Test_ApplicantLogin_NoDataReceived(t *testing.T) {
+func Test_EmployerLogin_NoDataReceived(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -114,7 +114,7 @@ func Test_ApplicantLogin_NoDataReceived(t *testing.T) {
 
 }
 
-func Test_ApplicantLogin_IncorrectMethod(t *testing.T) {
+func Test_EmployerLogin_IncorrectMethod(t *testing.T) {
 
 	assert := assert.New(t)
 
@@ -161,33 +161,33 @@ func Test_ApplicantLogin_IncorrectMethod(t *testing.T) {
 
 }
 
-func Test_ApplicantLogin_IncorrectPassword(t *testing.T) {
+func Test_EmployerLogin_IncorrectPassword(t *testing.T) {
 
 	assert := assert.New(t)
 
 	ts := httptest.NewServer(http.HandlerFunc(employers.Login))
 
 	data := map[string]string{
-		"firstname":          "First",
-		"lastname":           "Last",
-		"email":              fmt.Sprintf("email-%s@test.com", string(encryption.GeneratePassword(9))),
-		"password":           string(encryption.GeneratePassword(9)),
-		"applicant-password": string(encryption.GeneratePassword(9)),
+		"firstname":         "First",
+		"lastname":          "Last",
+		"email":             fmt.Sprintf("email-%s@test.com", string(encryption.GeneratePassword(9))),
+		"password":          string(encryption.GeneratePassword(9)),
+		"employer-password": string(encryption.GeneratePassword(9)),
 	}
 
-	applicant := testhelper.TestUser{
+	employer := testhelper.TestEmployer{
 		FirstName: data["firstname"],
 		LastName:  data["lastname"],
 		Email:     data["email"],
 	}
 
-	hashedPassword, err := encryption.HashPassword([]byte(data["applicant-password"]))
+	hashedPassword, err := encryption.HashPassword([]byte(data["employer-password"]))
 
 	if err != nil {
 		t.Fatal()
 	}
 
-	applicant.HashedPassword = hashedPassword
+	employer.HashedPassword = hashedPassword
 
 	requestBody, err := json.Marshal(data)
 

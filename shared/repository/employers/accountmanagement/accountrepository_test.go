@@ -583,6 +583,81 @@ func Test_EmployerRepository_GetActiveJobPackages_Correct(t *testing.T) {
 
 }
 
+func Test_EmployerRepository_SetEmployerCompany_Correct(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	employer := testhelper.Helper_RandomEmployer(t)
+	company := testhelper.Helper_RandomCompany(t)
+
+	err := repository.SetEmployerCompany(employer.PublicID, company.PublicID)
+
+	result := testhelper.Helper_GetEmployer(employer.PublicID, t)
+
+	assert.Equal(result.CompanyPublicID, company.PublicID)
+	assert.Nil(err)
+
+}
+
+func Test_EmployerRepository_SetEmployerCompany_Incorrect_NoEmployerPublicID(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	err := repository.SetEmployerCompany("", "notvalid")
+
+	assert.NotNil(err)
+
+}
+
+func Test_EmployerRepository_SetEmployerCompany_Incorrect_NoCompanyPublicID(t *testing.T) {
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	err := repository.SetEmployerCompany("notvalid", "")
+
+	assert.NotNil(err)
+
+}
+
+func Test_EmployerRepository_GetEmployerCompany_Incorrect_NoEmployerPublicID(t *testing.T) {
+
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	_, err := repository.GetEmployerCompany("")
+
+	assert.NotNil(err)
+
+}
+
+func Test_EmployerRepository_GetEmployerCompany_Correct(t *testing.T) {
+
+	assert := assert.New(t)
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	employer := testhelper.Helper_RandomEmployer(t)
+	company := testhelper.Helper_RandomCompany(t)
+
+	err := testhelper.Helper_SetEmployerCompany(employer.PublicID, company.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		t.Fatal()
+	}
+
+	result, err := repository.GetEmployerCompany(employer.PublicID)
+
+	assert.Nil(err)
+	assert.Equal(company.Domain, result.Domain)
+	assert.Equal(company.Name, result.Name)
+
+}
+
 // func Test_EmployerRepository_GetEmployerRegistrationStep_CorrectData_NewEmployer(t *testing.T) {
 
 // 	assert := assert.New(t)

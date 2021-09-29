@@ -1,15 +1,16 @@
 package jwt
 
 import (
+	"encoding/base64"
 	"errors"
 	"log"
+	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt"
 )
-
-var signingKey = []byte(os.Getenv("KNIT_SIGNING_KEY"))
 
 // Token represents a JWT token
 type Token struct {
@@ -42,7 +43,7 @@ func GenerateToken(userId string) (string, error) {
 
 	claims := JWTData{
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * 168).Unix(), // week
 		},
 		CustomClaims: map[string]string{
 			"user": userId,
@@ -75,5 +76,32 @@ func ParseToken(inputTokenString string) (*JWTData, error) {
 	}
 
 	return claims.Claims.(*JWTData), nil
+
+}
+
+func GetUserClaim(r *http.Request) string {
+
+	if r.Header.Get("Authorization") == "" {
+		log.Println(errors.New("problem with bearer token"))
+		return ""
+	}
+
+	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
+
+	authKey, err := base64.StdEncoding.DecodeString(auth[1])
+
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	tokenClaims, err := ParseToken(string(authKey))
+
+	if err != nil {
+		log.Println(err)
+		return ""
+	}
+
+	return tokenClaims.CustomClaims["user"]
 
 }

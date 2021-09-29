@@ -7,8 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
+	"bit-jobs-api/shared/repository/companies"
 	employers "bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/repository/employers/accountmanagement"
 	"bit-jobs-api/shared/response"
@@ -55,6 +57,24 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	employer, err := repository.CreateEmployer(credentials.FirstName, credentials.LastName, credentials.Email, string(hashedPassword))
+
+	if err != nil {
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	companyRepository := companies.NewCompanyRegistry().GetCompanyRepository()
+
+	companyDomain := strings.SplitN(credentials.Email, "@", 2)[1]
+
+	company, err := companyRepository.GetOrCreateCompany(companyDomain, "", "", "", "", "", "", "", "", "")
+
+	if err != nil {
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	err = repository.SetEmployerCompany(employer.PublicID, company.PublicID)
 
 	if err != nil {
 		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
