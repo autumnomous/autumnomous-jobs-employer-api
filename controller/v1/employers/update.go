@@ -26,6 +26,18 @@ type updateAccountData struct {
 	// Bio          string `json:"bio"`
 }
 
+type updateCompanyData struct {
+	Name         string `json:"name"`
+	Location     string `json:"location"`
+	URL          string `json:"url"`
+	Facebook     string `json:"facebook"`
+	Twitter      string `json:"twitter"`
+	Instagram    string `json:"instagram"`
+	Description  string `json:"description"`
+	Logo         string `json:"logo"`
+	ExtraDetails string `json:"extradetails"`
+}
+
 func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
@@ -110,4 +122,42 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendJSON(w, employer)
+}
+
+func UpdateCompany(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		response.SendJSONMessage(w, http.StatusMethodNotAllowed, response.FriendlyError)
+		return
+	}
+
+	publicID := jwt.GetUserClaim(r)
+
+	if publicID == "" {
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	var data updateCompanyData
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&data)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	company, err := repository.UpdateEmployerCompany(publicID, data.Name, data.Location, data.URL, data.Facebook, data.Twitter, data.Instagram, data.Description, data.Logo, data.ExtraDetails)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	response.SendJSON(w, company)
+
 }

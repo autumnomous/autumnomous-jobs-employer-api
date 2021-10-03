@@ -35,6 +35,7 @@ func routes() *httprouter.Router {
 
 	r.POST("/employer/update-password", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdatePassword)))
 	r.POST("/employer/update-account", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdateAccount)))
+	r.POST("/employer/update-company", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdateCompany)))
 
 	r.GET("/employer/get", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetEmployer)))
 	r.POST("/employer/create/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.CreateJob)))

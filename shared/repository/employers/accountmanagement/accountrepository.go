@@ -315,6 +315,94 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 	return Employer, nil
 }
 
+func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, companyName, location, url, facebook, twitter, instagram, description, logo, extradetails string) (*companies.Company, error) {
+
+	var company companies.Company
+
+	stmt, err := repository.Database.Prepare(`
+		SELECT companies.name, companies.location, companies.url, 
+			companies.facebook, companies.twitter, companies.instagram, 
+			companies.logo, companies.description, companies.extradetails,
+			companies.domain, companies.publicid
+		FROM companies 
+		JOIN employers ON employers.companyid = companies.id 
+		WHERE employers.publicid=$1;`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Location, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.Domain, &company.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	if companyName != "" {
+		company.Name = companyName
+	}
+
+	if location != "" {
+		company.Location = location
+	}
+
+	if url != "" {
+		company.URL = url
+	}
+
+	if facebook != "" {
+		company.Facebook = facebook
+	}
+
+	if twitter != "" {
+		company.Twitter = twitter
+	}
+
+	if instagram != "" {
+		company.Instagram = instagram
+	}
+
+	if description != "" {
+		company.Description = description
+	}
+
+	if logo != "" {
+		company.Logo = logo
+	}
+
+	if extradetails != "" {
+		company.ExtraDetails = extradetails
+	}
+
+	stmt, err = repository.Database.Prepare(`UPDATE companies SET name=$1, location=$2, url=$3, facebook=$4, twitter=$5, instagram=$6, description=$7, logo=$8, extradetails=$9 WHERE publicid=$10;`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	_, err = stmt.Exec(company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails, company.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	emp, _ := repository.GetEmployer(employerPublicID)
+
+	if emp.RegistrationStep == CompanyDetails.String() {
+		stmt, _ = repository.Database.Prepare(`UPDATE employers SET registrationstep='payment-method' WHERE publicid=$1;`)
+
+		stmt.Exec(employerPublicID)
+
+	}
+
+	return &company, nil
+
+}
+
 func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
 
 	if jobTitle == "" {
