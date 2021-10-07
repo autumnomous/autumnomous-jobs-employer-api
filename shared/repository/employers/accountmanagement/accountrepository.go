@@ -16,18 +16,17 @@ type EmployerRepository struct {
 }
 
 type Employer struct {
-	FirstName              string `json:"firstname"`
-	LastName               string `json:"lastname"`
-	Email                  string `json:"email"`
-	PhoneNumber            string `json:"phonenumber"`
-	MobileNumber           string `json:"mobilenumber"`
-	Role                   string `json:"role"`
-	TotalPostsBought       int    `json:"totalpostsbought"`
-	RegistrationStep       string `json:"registrationstep"`
-	Password               string
-	CompanyPublicID        string `json:"companypublicid"`
-	PublicID               string `json:"publicid"`
-	InitialPasswordChanged bool   `json:"initialpasswordchanged"`
+	FirstName        string `json:"firstname"`
+	LastName         string `json:"lastname"`
+	Email            string `json:"email"`
+	PhoneNumber      string `json:"phonenumber"`
+	MobileNumber     string `json:"mobilenumber"`
+	Role             string `json:"role"`
+	TotalPostsBought int    `json:"totalpostsbought"`
+	RegistrationStep string `json:"registrationstep"`
+	Password         string
+	CompanyPublicID  string `json:"companypublicid"`
+	PublicID         string `json:"publicid"`
 }
 
 type Job struct {
@@ -74,11 +73,11 @@ const (
 	PaymentDetails
 
 	// Complete Registration Step 6
-	Complete
+	RegistrationComplete
 )
 
 func (rs RegistrationStep) String() string {
-	return [...]string{"change-password", "personal-information", "company-details", "payment-method", "payment-details", "complete"}[rs]
+	return [...]string{"change-password", "personal-information", "company-details", "payment-method", "payment-details", "registration-complete"}[rs]
 }
 
 func NewEmployerRepository(db *sql.DB) *EmployerRepository {
@@ -118,7 +117,7 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 	var employer Employer
 
 	stmt, err := repository.Database.Prepare(`
-		SELECT firstname, lastname, email, totalpostsbought, registrationstep
+		SELECT firstname, lastname, email, totalpostsbought, registrationstep, mobilenumber, phonenumber, role
 		FROM employers
 		WHERE publicid=$1;`,
 	)
@@ -128,7 +127,7 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 		return nil, err
 	}
 
-	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought, &employer.RegistrationStep)
+	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought, &employer.RegistrationStep, &employer.MobileNumber, &employer.PhoneNumber, &employer.Role)
 
 	if err != nil {
 		log.Println(err)
@@ -400,6 +399,45 @@ func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, co
 	}
 
 	return &company, nil
+
+}
+
+func (repository *EmployerRepository) UpdateEmployerPaymentMethod(employerPublicID, paymentMethod string) error {
+
+	emp, _ := repository.GetEmployer(employerPublicID)
+
+	if emp.RegistrationStep == PaymentMethod.String() {
+		stmt, err := repository.Database.Prepare(`UPDATE employers SET registrationstep='payment-details' WHERE publicid=$1;`)
+
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		stmt.Exec(employerPublicID)
+
+	}
+
+	return nil
+}
+
+func (repository *EmployerRepository) UpdateEmployerPaymentDetails(employerPublicID, paymentDetails string) error {
+
+	emp, _ := repository.GetEmployer(employerPublicID)
+
+	if emp.RegistrationStep == PaymentDetails.String() {
+		stmt, err := repository.Database.Prepare(`UPDATE employers SET registrationstep='registration-complete' WHERE publicid=$1;`)
+
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		stmt.Exec(employerPublicID)
+
+	}
+
+	return nil
 
 }
 
