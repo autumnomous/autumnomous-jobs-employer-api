@@ -38,6 +38,14 @@ type updateCompanyData struct {
 	ExtraDetails string `json:"extradetails"`
 }
 
+type updatePaymentMethodData struct {
+	PaymentMethod string `json:"paymentmethod"`
+}
+
+type updatePaymentDetailsData struct {
+	PaymentDetails string `json:"paymentdetails"`
+}
+
 func UpdatePassword(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
@@ -159,5 +167,81 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendJSON(w, company)
+
+}
+
+func UpdatePaymentMethod(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		response.SendJSONMessage(w, http.StatusMethodNotAllowed, response.FriendlyError)
+		return
+	}
+
+	publicID := jwt.GetUserClaim(r)
+
+	if publicID == "" {
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	var method updatePaymentMethodData
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&method)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	err = repository.UpdateEmployerPaymentMethod(publicID, method.PaymentMethod)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	response.SendJSON(w, nil)
+
+}
+
+func UpdatePaymentDetails(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		response.SendJSONMessage(w, http.StatusMethodNotAllowed, response.FriendlyError)
+		return
+	}
+
+	publicID := jwt.GetUserClaim(r)
+
+	if publicID == "" {
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	var details updatePaymentDetailsData
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&details)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+
+	err = repository.UpdateEmployerPaymentDetails(publicID, details.PaymentDetails)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	response.SendJSON(w, nil)
 
 }
