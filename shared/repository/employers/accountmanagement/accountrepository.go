@@ -127,11 +127,25 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 		return nil, err
 	}
 
-	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought, &employer.RegistrationStep, &employer.MobileNumber, &employer.PhoneNumber, &employer.Role)
+	var emp_mobile_number, emp_work_number, emp_role sql.NullString
+
+	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought, &employer.RegistrationStep, &emp_mobile_number, &emp_work_number, &emp_role)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
+	}
+
+	if emp_mobile_number.Valid {
+		employer.MobileNumber = emp_mobile_number.String
+	}
+
+	if emp_work_number.Valid {
+		employer.PhoneNumber = emp_work_number.String
+	}
+
+	if emp_role.Valid {
+		employer.Role = emp_role.String
 	}
 
 	employer.PublicID = userID
