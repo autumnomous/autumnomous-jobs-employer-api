@@ -129,7 +129,7 @@ func GetEmployer(w http.ResponseWriter, r *http.Request) {
 	response.SendJSON(w, employer)
 }
 
-func GetCompany(w http.ResponseWriter, r *http.Request) {
+func GetEmployerCompany(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
 		response.SendJSONMessage(w, http.StatusMethodNotAllowed, "Method not allowed")

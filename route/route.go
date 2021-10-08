@@ -40,6 +40,7 @@ func routes() *httprouter.Router {
 	r.POST("/employer/update-payment-details", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdatePaymentDetails)))
 
 	r.GET("/employer/get", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetEmployer)))
+	r.GET("/employer/get/company", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetEmployerCompany)))
 	r.POST("/employer/create/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.CreateJob)))
 	r.POST("/employer/edit/job", hr.Handler(alice.New(acl.ValidateMyJWT, acl.ValidateMyJWT).ThenFunc(employers.EditJob)))
 	r.GET("/employer/get/jobs", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetJobs)))
