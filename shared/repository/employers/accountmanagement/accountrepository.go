@@ -22,6 +22,9 @@ type Employer struct {
 	PhoneNumber      string `json:"phonenumber"`
 	MobileNumber     string `json:"mobilenumber"`
 	Role             string `json:"role"`
+	Facebook         string `json:"facebook"`
+	Twitter          string `json:"twitter"`
+	Instagram        string `json:"instagram"`
 	TotalPostsBought int    `json:"totalpostsbought"`
 	RegistrationStep string `json:"registrationstep"`
 	Password         string
@@ -117,7 +120,7 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 	var employer Employer
 
 	stmt, err := repository.Database.Prepare(`
-		SELECT firstname, lastname, email, totalpostsbought, registrationstep, mobilenumber, phonenumber, role
+		SELECT firstname, lastname, email, totalpostsbought, registrationstep, mobilenumber, phonenumber, role, facebook, twitter, instagram
 		FROM employers
 		WHERE publicid=$1;`,
 	)
@@ -127,9 +130,9 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 		return nil, err
 	}
 
-	var emp_mobile_number, emp_work_number, emp_role sql.NullString
+	var emp_mobile_number, emp_work_number, emp_role, emp_facebook, emp_twitter, emp_instagram sql.NullString
 
-	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought, &employer.RegistrationStep, &emp_mobile_number, &emp_work_number, &emp_role)
+	err = stmt.QueryRow(userID).Scan(&employer.FirstName, &employer.LastName, &employer.Email, &employer.TotalPostsBought, &employer.RegistrationStep, &emp_mobile_number, &emp_work_number, &emp_role, &emp_facebook, &emp_twitter, &emp_instagram)
 
 	if err != nil {
 		log.Println(err)
@@ -148,6 +151,17 @@ func (repository *EmployerRepository) GetEmployer(userID string) (*Employer, err
 		employer.Role = emp_role.String
 	}
 
+	if emp_facebook.Valid {
+		employer.Facebook = emp_facebook.String
+	}
+
+	if emp_twitter.Valid {
+		employer.Twitter = emp_twitter.String
+	}
+
+	if emp_instagram.Valid {
+		employer.Instagram = emp_instagram.String
+	}
 	employer.PublicID = userID
 
 	return &employer, nil
@@ -259,7 +273,7 @@ func (repository *EmployerRepository) UpdateEmployerPassword(publicID, password,
 	}
 }
 
-func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName, lastName, email, phoneNumber, mobileNumber, role string) (*Employer, error) {
+func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName, lastName, email, phoneNumber, mobileNumber, role, facebook, twitter, instagram string) (*Employer, error) {
 
 	Employer := &Employer{}
 
@@ -301,15 +315,18 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 		Employer.Role = role
 	}
 
+	Employer.Facebook = facebook
+	Employer.Twitter = twitter
+	Employer.Instagram = instagram
 	Employer.PublicID = publicID
-	stmt, err = repository.Database.Prepare(`UPDATE employers SET firstname=$1, lastname=$2, email=$3, phonenumber=$4, mobilenumber=$5, role=$6 WHERE publicid=$7;`)
+	stmt, err = repository.Database.Prepare(`UPDATE employers SET firstname=$1, lastname=$2, email=$3, phonenumber=$4, mobilenumber=$5, role=$6, facebook=$7, twitter=$8, instagram=$9 WHERE publicid=$10;`)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	_, err = stmt.Exec(Employer.FirstName, Employer.LastName, Employer.Email, Employer.PhoneNumber, Employer.MobileNumber, Employer.Role, Employer.PublicID)
+	_, err = stmt.Exec(Employer.FirstName, Employer.LastName, Employer.Email, Employer.PhoneNumber, Employer.MobileNumber, Employer.Role, facebook, twitter, instagram, Employer.PublicID)
 
 	if err != nil {
 		log.Println(err)

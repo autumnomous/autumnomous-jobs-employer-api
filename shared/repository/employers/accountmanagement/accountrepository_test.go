@@ -347,7 +347,7 @@ func Test_EmployerRepository_UpdateEmployerAccount_CorrectData(t *testing.T) {
 		"publicid":  Employer.PublicID,
 	}
 
-	updatedEmployer, err := repository.UpdateEmployerAccount(data["publicid"], data["firstname"], data["lastname"], data["email"], "", "", "")
+	updatedEmployer, err := repository.UpdateEmployerAccount(data["publicid"], data["firstname"], data["lastname"], data["email"], "", "", "", "", "", "")
 
 	assert.NotNil(updatedEmployer)
 	assert.Nil(err)

@@ -23,6 +23,9 @@ type updateAccountData struct {
 	PhoneNumber  string `json:"phonenumber"`
 	MobileNumber string `json:"mobilenumber"`
 	Role         string `json:"role"`
+	Facebook     string `json:"facebook"`
+	Twitter      string `json:"twitter"`
+	Instagram    string `json:"instagram"`
 	// Bio          string `json:"bio"`
 }
 
@@ -121,7 +124,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	employer, err := repository.UpdateEmployerAccount(publicID, data.FirstName, data.LastName, data.Email, data.PhoneNumber, data.MobileNumber, data.Role)
+	employer, err := repository.UpdateEmployerAccount(publicID, data.FirstName, data.LastName, data.Email, data.PhoneNumber, data.MobileNumber, data.Role, data.Facebook, data.Twitter, data.Instagram)
 
 	if err != nil {
 		log.Println(err)
