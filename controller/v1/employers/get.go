@@ -6,14 +6,14 @@ import (
 	"net/http"
 
 	"bit-jobs-api/shared/repository/employers"
-	"bit-jobs-api/shared/repository/employers/accountmanagement"
+	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
 )
 
 type JobsResponse struct {
-	Jobs             []*accountmanagement.Job `json:"jobs"`
-	TotalPostsBought int                      `json:"totalpostsbought"`
+	Jobs             []*jobs.Job `json:"jobs"`
+	TotalPostsBought int         `json:"totalpostsbought"`
 }
 
 func GetJobs(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +30,7 @@ func GetJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+	repository := jobs.NewJobRegistry().GetJobRepository()
 
 	jobs, totalPostsBought, err := repository.GetEmployerJobs(publicID)
 
@@ -74,7 +74,7 @@ func GetJob(w http.ResponseWriter, r *http.Request) {
 		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
 		return
 	}
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+	repository := jobs.NewJobRegistry().GetJobRepository()
 
 	job, err := repository.GetJob(details["publicid"])
 

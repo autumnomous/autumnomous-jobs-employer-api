@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"bit-jobs-api/shared/repository/employers"
+	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
 )
@@ -56,7 +56,7 @@ func EditJob(w http.ResponseWriter, r *http.Request) {
 
 	publicID := tokenClaims.CustomClaims["user"]
 
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+	repository := jobs.NewJobRegistry().GetJobRepository()
 
 	job, err := repository.EditJob(publicID, details.PublicID, details.Title, details.JobType, details.Category, details.Description, details.PostStartDatetime, details.PostEndDatetime, details.PayPeriod, details.MinSalary, details.MaxSalary)
 

@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 
-	"bit-jobs-api/shared/repository/employers"
+	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
 )
@@ -57,7 +57,7 @@ func DeleteJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+	repository := jobs.NewJobRegistry().GetJobRepository()
 
 	job, err := repository.DeleteJob(publicID, details.PublicID)
 

@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"bit-jobs-api/shared/repository/employers"
+	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
 )
@@ -41,7 +41,7 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 
 	publicID := jwt.GetUserClaim(r)
 
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+	repository := jobs.NewJobRegistry().GetJobRepository()
 
 	// TODO: jobDetails.PostEndDatetime = jobDetails.PostStartDatetime + 30 days
 

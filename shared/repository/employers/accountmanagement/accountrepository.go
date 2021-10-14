@@ -32,20 +32,6 @@ type Employer struct {
 	PublicID         string `json:"publicid"`
 }
 
-type Job struct {
-	PublicID          string `json:"publicid"`
-	Title             string `json:"title"`
-	JobType           string `json:"jobtype"`
-	Category          string `json:"category"`
-	Description       string `json:"description"` // make required?
-	EmployerPublicID  string `json:"employerpublicid"`
-	MinSalary         int    `json:"minsalary"`
-	MaxSalary         int    `json:"maxsalary"`
-	PayPeriod         string `json:"payperiod"`
-	PostStartDatetime string `json:"poststartdatetime"`
-	PostEndDatetime   string `json:"postenddatetime"`
-}
-
 type JobPackage struct {
 	ID           int     `json:"id"`
 	TypeID       string  `json:"typeid"`
@@ -472,37 +458,6 @@ func (repository *EmployerRepository) UpdateEmployerPaymentDetails(employerPubli
 
 }
 
-func (repository *EmployerRepository) EmployerCreateJob(employerPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
-
-	if jobTitle == "" {
-		return nil, errors.New("data cannot be empty")
-	}
-
-	var job Job
-
-	stmt, err := repository.Database.Prepare(`
-		INSERT INTO 
-		jobs(title, jobtype, category, description, minsalary, 
-				maxsalary, payperiod, poststartdatetime, postenddatetime, employerid) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, (SELECT id FROM employers WHERE publicid=$10)) 
-		RETURNING publicid;`)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	err = stmt.QueryRow(jobTitle, jobType, category, jobDescription, minSalary, maxSalary, payPeriod, postStartDatetime, postEndDatetime, employerPublicID).Scan(&job.PublicID)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return repository.GetJob(job.PublicID)
-
-}
-
 func (repository *EmployerRepository) SetEmployerCompany(employerPublicID, companyPublicID string) error {
 
 	if employerPublicID == "" || companyPublicID == "" {
@@ -552,173 +507,6 @@ func (repository *EmployerRepository) GetEmployerCompany(employerPublicID string
 	return &company, nil
 }
 
-func (repository *EmployerRepository) GetJob(jobPublicID string) (*Job, error) {
-
-	if jobPublicID == "" {
-		return nil, errors.New("missing required value")
-	}
-	var job Job
-
-	stmt, err := repository.Database.Prepare(`
-		SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
-			jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime,
-			jobs.postenddatetime, employers.publicid
-		FROM jobs
-		JOIN employers ON employers.id=jobs.employerid
-		WHERE jobs.publicid=$1;`,
-	)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.EmployerPublicID)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	job.PublicID = jobPublicID
-
-	return &job, nil
-}
-
-func (repository *EmployerRepository) GetEmployerJobs(employerPublicID string) ([]*Job, int, error) {
-
-	if employerPublicID == "" {
-		return nil, -1, errors.New("missing required value")
-	}
-
-	var jobs []*Job
-	var employerTotalPostsBought int
-
-	stmt, err := repository.Database.Prepare(`
-			SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
-				jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime, jobs.postenddatetime, jobs.publicid,
-				employers.totalpostsbought
-			FROM jobs
-			JOIN employers ON employers.id=jobs.employerid
-			WHERE jobs.employerid=(SELECT id FROM employers WHERE publicid=$1);`)
-
-	if err != nil {
-		log.Println(err)
-		return nil, -1, err
-	}
-
-	rows, err := stmt.Query(employerPublicID)
-
-	if err != nil {
-		log.Println(err)
-		return nil, -1, err
-	}
-
-	defer rows.Close()
-	for rows.Next() {
-		job := &Job{}
-
-		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.PublicID, &employerTotalPostsBought)
-
-		if err != nil {
-			log.Println(err)
-			return nil, -1, err
-		}
-		job.EmployerPublicID = employerPublicID
-
-		jobs = append(jobs, job)
-	}
-
-	return jobs, employerTotalPostsBought, nil
-}
-
-func (repository *EmployerRepository) DeleteJob(employerPublicID, jobPublicID string) (*Job, error) {
-
-	if employerPublicID == "" || jobPublicID == "" {
-		return nil, errors.New("missing required value")
-	}
-
-	var job Job
-
-	stmt, err := repository.Database.Prepare(`DELETE FROM jobs WHERE publicid=$1 AND employerid=(SELECT id FROM employers WHERE publicid=$2) RETURNING title, jobtype, category, description;`)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	err = stmt.QueryRow(jobPublicID, employerPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description)
-
-	if err != nil {
-		log.Println(err)
-		return nil, err
-	}
-
-	return &job, nil
-}
-
-func (repository *EmployerRepository) EditJob(employerPublicID, jobPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
-
-	if employerPublicID == "" || jobPublicID == "" {
-		return nil, errors.New("missing required value")
-	}
-
-	job, err := repository.GetJob(jobPublicID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if jobTitle != "" {
-		job.Title = jobTitle
-	}
-
-	if jobType != "" {
-		job.JobType = jobType
-	}
-
-	if category != "" {
-		job.Category = category
-	}
-
-	if jobDescription != "" {
-		job.Description = jobDescription
-	}
-
-	if postStartDatetime != "" {
-		job.PostStartDatetime = postStartDatetime
-	}
-
-	if postEndDatetime != "" {
-		job.PostEndDatetime = postEndDatetime
-	}
-
-	if minSalary != 0 {
-		job.MinSalary = minSalary
-	}
-
-	if maxSalary != 0 {
-		job.MaxSalary = maxSalary
-	}
-
-	if payPeriod != "" {
-		job.PayPeriod = payPeriod
-	}
-	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, jobtype=$2, category=$3, description=$4, poststartdatetime=$5, postenddatetime=$6, minsalary=$7, maxsalary=$8, payperiod=$9 WHERE publicid=$10 AND employerid=(SELECT id FROM employers WHERE publicid=$11);`)
-
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = stmt.Exec(job.Title, job.JobType, job.Category, job.Description, job.PostStartDatetime, job.PostEndDatetime, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PublicID, employerPublicID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return job, nil
-}
-
 func (repository *EmployerRepository) GetActiveJobPackages() ([]*JobPackage, error) {
 
 	var packages []*JobPackage
@@ -755,4 +543,28 @@ func (repository *EmployerRepository) GetActiveJobPackages() ([]*JobPackage, err
 	}
 
 	return packages, nil
+}
+
+func (repository *EmployerRepository) GetJobPackage(typeID string) (*JobPackage, error) {
+
+	var pack JobPackage
+	stmt, err := repository.Database.Prepare(`
+			SELECT id, typeid, isactive, title, numberofjobs, description, price
+			FROM jobpackages
+			WHERE typeid=$1;`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	err = stmt.QueryRow(typeID).Scan(&pack.ID, &pack.TypeID, &pack.IsActive, &pack.Title, &pack.NumberOfJobs, &pack.Description, &pack.Price)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	return &pack, nil
+
 }

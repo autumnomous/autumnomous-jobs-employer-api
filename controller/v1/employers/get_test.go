@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"bit-jobs-api/controller/v1/employers"
-	"bit-jobs-api/shared/repository/employers/accountmanagement"
+	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/services/security/jwt"
 	"bit-jobs-api/shared/testhelper"
 
@@ -17,8 +17,8 @@ import (
 )
 
 type JobsResponse struct {
-	Jobs             []*accountmanagement.Job `json:"jobs"`
-	TotalPostsBought int                      `json:"totalpostsbought"`
+	Jobs             []*jobs.Job `json:"jobs"`
+	TotalPostsBought int         `json:"totalpostsbought"`
 }
 
 func init() {
@@ -182,7 +182,7 @@ func Test_Employer_GetJobPackages_Correct(t *testing.T) {
 func Test_Employer_GetCompany_Correct(t *testing.T) {
 
 	assert := assert.New(t)
-	ts := httptest.NewServer(http.HandlerFunc(employers.GetCompany))
+	ts := httptest.NewServer(http.HandlerFunc(employers.GetEmployerCompany))
 
 	defer ts.Close()
 
