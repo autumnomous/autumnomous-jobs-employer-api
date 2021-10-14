@@ -12,6 +12,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	testhelper.Init()
+}
+
 func Test_EmployerRepository_EmployerCreateJob_IncorrectData(t *testing.T) {
 	assert := assert.New(t)
 
