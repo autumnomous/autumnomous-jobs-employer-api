@@ -1,10 +1,12 @@
 package jobs
 
 import (
+	"bit-jobs-api/shared/services/utils"
 	"database/sql"
 	"errors"
 	"log"
 	"strings"
+	"time"
 )
 
 type JobRepository struct {
@@ -53,7 +55,7 @@ func (repository *JobRepository) EmployerCreateJob(employerPublicID, jobTitle, j
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobTitle, jobType, category, jobDescription, minSalary, maxSalary, payPeriod, postStartDatetime, postEndDatetime, employerPublicID, slug).Scan(&job.PublicID)
+	err = stmt.QueryRow(jobTitle, jobType, category, jobDescription, minSalary, maxSalary, payPeriod, utils.NewNullString(postStartDatetime), utils.NewNullString(postEndDatetime), employerPublicID, slug).Scan(&job.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -70,7 +72,7 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 		return nil, errors.New("missing required value")
 	}
 	var job Job
-
+	var postStartDatetime, postEndDatetime sql.NullString
 	stmt, err := repository.Database.Prepare(`
 		SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
 			jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime,
@@ -85,7 +87,7 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.EmployerPublicID)
+	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &postStartDatetime, &postEndDatetime, &job.EmployerPublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -94,54 +96,69 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 
 	job.PublicID = jobPublicID
 
+	if postStartDatetime.Valid {
+		job.PostStartDatetime = postStartDatetime.String
+	}
+
+	if postEndDatetime.Valid {
+		job.PostEndDatetime = postEndDatetime.String
+	}
+
 	return &job, nil
 }
 
-func (repository *JobRepository) GetEmployerJobs(employerPublicID string) ([]*Job, int, error) {
+func (repository *JobRepository) GetEmployerJobs(employerPublicID string) ([]*Job, error) {
 
 	if employerPublicID == "" {
-		return nil, -1, errors.New("missing required value")
+		return nil, errors.New("missing required value")
 	}
 
 	var jobs []*Job
-	var employerTotalPostsBought int
 
 	stmt, err := repository.Database.Prepare(`
 			SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
-				jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime, jobs.postenddatetime, jobs.publicid,
-				employers.totalpostsbought
+				jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime, jobs.postenddatetime, jobs.publicid
 			FROM jobs
 			JOIN employers ON employers.id=jobs.employerid
 			WHERE jobs.employerid=(SELECT id FROM employers WHERE publicid=$1);`)
 
 	if err != nil {
 		log.Println(err)
-		return nil, -1, err
+		return nil, err
 	}
 
 	rows, err := stmt.Query(employerPublicID)
 
 	if err != nil {
 		log.Println(err)
-		return nil, -1, err
+		return nil, err
 	}
 
 	defer rows.Close()
 	for rows.Next() {
 		job := &Job{}
+		var postStartDatetime, postEndDatetime sql.NullString
 
-		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PostStartDatetime, &job.PostEndDatetime, &job.PublicID, &employerTotalPostsBought)
+		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &postStartDatetime, &postEndDatetime, &job.PublicID)
 
 		if err != nil {
 			log.Println(err)
-			return nil, -1, err
+			return nil, err
 		}
 		job.EmployerPublicID = employerPublicID
+
+		if postStartDatetime.Valid {
+			job.PostStartDatetime = postStartDatetime.String
+		}
+
+		if postEndDatetime.Valid {
+			job.PostEndDatetime = postEndDatetime.String
+		}
 
 		jobs = append(jobs, job)
 	}
 
-	return jobs, employerTotalPostsBought, nil
+	return jobs, nil
 }
 
 func (repository *JobRepository) DeleteJob(employerPublicID, jobPublicID string) (*Job, error) {
@@ -169,13 +186,14 @@ func (repository *JobRepository) DeleteJob(employerPublicID, jobPublicID string)
 	return &job, nil
 }
 
-func (repository *JobRepository) EditJob(employerPublicID, jobPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
+func (repository *JobRepository) EditJob(employerPublicID, jobPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime string, remote bool) (*Job, error) {
 
 	if employerPublicID == "" || jobPublicID == "" {
 		return nil, errors.New("missing required value")
 	}
 
 	var slug string
+	var postEndDatetime time.Time
 
 	job, err := repository.GetJob(jobPublicID)
 
@@ -203,23 +221,31 @@ func (repository *JobRepository) EditJob(employerPublicID, jobPublicID, jobTitle
 
 	if postStartDatetime != "" {
 		job.PostStartDatetime = postStartDatetime
+
+		startDate, err := time.Parse("2006-01-02", postStartDatetime)
+		if err != nil {
+			return nil, err
+		}
+
+		postEndDatetime = startDate.Add(time.Hour * 24 * 30)
+		job.PostEndDatetime = postEndDatetime.Local().Format("2006-01-02")
 	}
 
-	if postEndDatetime != "" {
-		job.PostEndDatetime = postEndDatetime
-	}
+	// if postEndDatetime != "" {
+	// 	job.PostEndDatetime = postEndDatetime
+	// }
 
-	if minSalary != 0 {
-		job.MinSalary = minSalary
-	}
+	// if minSalary != 0 {
+	// 	job.MinSalary = minSalary
+	// }
 
-	if maxSalary != 0 {
-		job.MaxSalary = maxSalary
-	}
+	// if maxSalary != 0 {
+	// 	job.MaxSalary = maxSalary
+	// }
 
-	if payPeriod != "" {
-		job.PayPeriod = payPeriod
-	}
+	// if payPeriod != "" {
+	// 	job.PayPeriod = payPeriod
+	// }
 	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, jobtype=$2, category=$3, description=$4, poststartdatetime=$5, postenddatetime=$6, minsalary=$7, maxsalary=$8, payperiod=$9, slug=$10 WHERE publicid=$11 AND employerid=(SELECT id FROM employers WHERE publicid=$12);`)
 
 	if err != nil {

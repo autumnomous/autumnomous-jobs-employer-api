@@ -33,30 +33,32 @@ func routes() *httprouter.Router {
 	r.POST("/employer/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.SignUp)))
 	r.POST("/employer/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.Login)))
 
-	r.POST("/employer/update-password", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdatePassword)))
-	r.POST("/employer/update-account", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdateAccount)))
-	r.POST("/employer/update-company", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdateCompany)))
-	r.POST("/employer/update-payment-method", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdatePaymentMethod)))
-	r.POST("/employer/update-payment-details", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.UpdatePaymentDetails)))
+	r.POST("/employer/update-password", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdatePassword)))
+	r.POST("/employer/update-account", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdateAccount)))
+	r.POST("/employer/update-company", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdateCompany)))
+	r.POST("/employer/update-payment-method", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdatePaymentMethod)))
+	r.POST("/employer/update-payment-details", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdatePaymentDetails)))
 
-	r.GET("/employer/get", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetEmployer)))
-	r.GET("/employer/get/company", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetEmployerCompany)))
-	r.POST("/employer/create/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.CreateJob)))
-	r.POST("/employer/edit/job", hr.Handler(alice.New(acl.ValidateMyJWT, acl.ValidateMyJWT).ThenFunc(employers.EditJob)))
-	r.GET("/employer/get/jobs", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetJobs)))
-	r.POST("/employer/get/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetJob)))
-	r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.DeleteJob)))
-	r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(employers.GetActiveJobPackages)))
+	r.GET("/employer/get", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetEmployer)))
+	r.GET("/employer/get/company", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetEmployerCompany)))
+	r.POST("/employer/create/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.CreateJob)))
+	r.POST("/employer/edit/job", hr.Handler(alice.New(acl.ValidateJWT, acl.ValidateJWT).ThenFunc(employers.EditJob)))
+	r.GET("/employer/get/jobs", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetJobs)))
+	r.POST("/employer/get/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetJob)))
+	r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.DeleteJob)))
+	r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetActiveJobPackages)))
 
-	// r.POST("/get-user", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(users.GetUser)))
+	r.POST("/employer/buy/job-package", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.PurchaseJobPackage)))
 
-	// r.GET("/get/client/registration", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(clients.CheckRegistration)))
-	// r.POST("/set/client/registration", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(clients.SetRegistration)))
+	// r.POST("/get-user", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(users.GetUser)))
 
-	// r.GET("/customers/:id", hr.Handler(alice.New(acl.ValidateMyJWT).ThenFunc(clients.GetClientCustomers)))
+	// r.GET("/get/client/registration", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(clients.CheckRegistration)))
+	// r.POST("/set/client/registration", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(clients.SetRegistration)))
+
+	// r.GET("/customers/:id", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(clients.GetClientCustomers)))
 	// Enable Pprof
 	// r.GET("/debug/pprof/*pprof", hr.Handler(alice.
-	// 	New(acl.ValidateMyJWT).
+	// 	New(acl.ValidateJWT).
 	// 	ThenFunc(pprofhandler.Handler)))
 
 	return r

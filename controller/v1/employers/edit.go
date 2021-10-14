@@ -17,11 +17,8 @@ type editJobDetails struct {
 	JobType           string `json:"jobtype"`
 	Category          string `json:"category"`
 	Description       string `json:"description"` // make required?
-	MinSalary         int    `json:"minsalary"`
-	MaxSalary         int    `json:"maxsalary"`
-	PayPeriod         string `json:"payperiod"`
 	PostStartDatetime string `json:"poststartdatetime"`
-	PostEndDatetime   string `json:"postenddatetime"`
+	Remote            bool   `json:"remote"`
 	PublicID          string `json:"publicid"`
 }
 
@@ -58,7 +55,7 @@ func EditJob(w http.ResponseWriter, r *http.Request) {
 
 	repository := jobs.NewJobRegistry().GetJobRepository()
 
-	job, err := repository.EditJob(publicID, details.PublicID, details.Title, details.JobType, details.Category, details.Description, details.PostStartDatetime, details.PostEndDatetime, details.PayPeriod, details.MinSalary, details.MaxSalary)
+	job, err := repository.EditJob(publicID, details.PublicID, details.Title, details.JobType, details.Category, details.Description, details.PostStartDatetime, details.Remote)
 
 	if err != nil {
 		log.Println(err)

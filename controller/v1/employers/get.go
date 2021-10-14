@@ -32,7 +32,7 @@ func GetJobs(w http.ResponseWriter, r *http.Request) {
 
 	repository := jobs.NewJobRegistry().GetJobRepository()
 
-	jobs, totalPostsBought, err := repository.GetEmployerJobs(publicID)
+	jobs, err := repository.GetEmployerJobs(publicID)
 
 	if err != nil {
 		log.Println(err)
@@ -40,7 +40,7 @@ func GetJobs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.SendJSON(w, &JobsResponse{Jobs: jobs, TotalPostsBought: totalPostsBought})
+	response.SendJSON(w, jobs)
 
 }
 
