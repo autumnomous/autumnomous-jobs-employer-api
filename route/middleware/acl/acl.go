@@ -12,7 +12,7 @@ import (
 	jwt "bit-jobs-api/shared/services/security/jwt"
 )
 
-func ValidateMyJWT(h http.Handler) http.Handler {
+func ValidateJWT(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 
 		s := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
@@ -29,30 +29,28 @@ func ValidateMyJWT(h http.Handler) http.Handler {
 
 					if err != nil {
 						log.Println(err)
-						response.SendJSONMessage(w, http.StatusBadRequest, "Couldn't parse JWT")
+						response.SendJSONMessage(w, http.StatusBadRequest, "Unauthorized")
 					}
 
 					if data == nil {
-						log.Print("data cannot be nil")
+
 						response.SendJSONMessage(w, http.StatusUnauthorized, "Unauthorized")
-						//TODO: respond with an httpstatus of not authorized
+
 					} else {
 						userId := data.CustomClaims["user"]
 
 						if userId == "" {
-							//TODO: respond with an httpstatus of not authorized
+
 							response.SendJSONMessage(w, http.StatusUnauthorized, "Unauthorized")
 						} else {
-							//TODO: get valid/active user by userid
+
 							repository := employers.NewEmployerRegistry().GetEmployerRepository()
 							_, err := repository.GetEmployer(userId)
 
 							//validate user below
 
 							if err != nil {
-								log.Println("bad keys")
-								//todo: respond with not authorized
-								response.SendJSONMessage(w, http.StatusUnauthorized, "Bad keys")
+								response.SendJSONMessage(w, http.StatusUnauthorized, "Unauthorized")
 							} else {
 
 								h.ServeHTTP(w, req)
@@ -62,7 +60,7 @@ func ValidateMyJWT(h http.Handler) http.Handler {
 				}
 			}
 		} else {
-			log.Println("bearer token bad")
+			response.SendJSONMessage(w, http.StatusUnauthorized, "Invalid Token")
 			//respond with invalid token
 		}
 	})
