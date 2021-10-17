@@ -352,21 +352,6 @@ func Test_EmployerRepository_UpdateEmployerAccount_CorrectData(t *testing.T) {
 	assert.Nil(err)
 }
 
-func Test_EmployerRepository_GetActiveJobPackages_Correct(t *testing.T) {
-	assert := assert.New(t)
-
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
-
-	testhelper.Helper_RandomJobPackage(t)
-
-	result, err := repository.GetActiveJobPackages()
-
-	assert.Nil(err)
-	assert.NotNil(result)
-	assert.GreaterOrEqual(len(result), 1)
-
-}
-
 func Test_EmployerRepository_SetEmployerCompany_Correct(t *testing.T) {
 	assert := assert.New(t)
 

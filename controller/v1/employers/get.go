@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"bit-jobs-api/shared/repository/employers"
+	"bit-jobs-api/shared/repository/jobpackages"
 	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
@@ -93,7 +94,7 @@ func GetActiveJobPackages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+	repository := jobpackages.NewJobPackageRegistry().GetJobPackageRepository()
 
 	packages, err := repository.GetActiveJobPackages()
 

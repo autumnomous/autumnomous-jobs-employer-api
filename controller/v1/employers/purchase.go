@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	"bit-jobs-api/shared/repository/employers"
+	"bit-jobs-api/shared/repository/jobpackages"
 	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
@@ -35,7 +35,7 @@ func PurchaseJobPackage(w http.ResponseWriter, r *http.Request) {
 
 	publicID := jwt.GetUserClaim(r)
 
-	repository := employers.NewEmployerRegistry().GetEmployerRepository()
+	repository := jobpackages.NewJobPackageRegistry().GetJobPackageRepository()
 
 	// TODO: stripe payment
 
