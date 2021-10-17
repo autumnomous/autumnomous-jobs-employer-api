@@ -117,11 +117,9 @@ func Test_EmployerRepository_GetEmployerJobs_IncorrectData(t *testing.T) {
 	assert := assert.New(t)
 
 	repository := jobs.NewJobRegistry().GetJobRepository()
-	var totalpostsbought int
 	jobs, err := repository.GetEmployerJobs("")
 
 	assert.Nil(jobs)
-	assert.Equal(totalpostsbought, -1)
 	assert.NotNil(err)
 }
 
@@ -131,16 +129,13 @@ func Test_EmployerRepository_GetEmployerJobs_CorrectData(t *testing.T) {
 	repository := jobs.NewJobRegistry().GetJobRepository()
 
 	employer := testhelper.Helper_RandomEmployer(t)
-	var totalpostsbought int
 	testhelper.Helper_RandomJob(employer, t)
 	testhelper.Helper_RandomJob(employer, t)
 	testhelper.Helper_RandomJob(employer, t)
 
 	jobs, err := repository.GetEmployerJobs(employer.PublicID)
 
-	employer.TotalPostsBought = totalpostsbought
 	assert.Equal(len(jobs), 3)
-	assert.Equal(employer.TotalPostsBought, 0)
 	assert.Nil(err)
 }
 
