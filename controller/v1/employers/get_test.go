@@ -9,17 +9,11 @@ import (
 	"testing"
 
 	"bit-jobs-api/controller/v1/employers"
-	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/services/security/jwt"
 	"bit-jobs-api/shared/testhelper"
 
 	"github.com/stretchr/testify/assert"
 )
-
-type JobsResponse struct {
-	Jobs             []*jobs.Job `json:"jobs"`
-	TotalPostsBought int         `json:"totalpostsbought"`
-}
 
 func init() {
 	testhelper.Init()
@@ -126,15 +120,14 @@ func Test_Employer_GetJobs_Correct(t *testing.T) {
 	}
 
 	decoder := json.NewDecoder(response.Body)
-	var result JobsResponse
+	var result []interface{}
 
 	decoder.Decode(&result)
 
 	assert.Nil(err)
 	assert.Equal(int(http.StatusOK), response.StatusCode)
 
-	assert.Equal(3, len(result.Jobs))
-	assert.Equal(0, result.TotalPostsBought)
+	assert.Equal(3, len(result))
 
 }
 

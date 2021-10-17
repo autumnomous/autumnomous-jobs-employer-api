@@ -36,9 +36,7 @@ type TestJob struct {
 	Category          string `json:"category"`
 	Description       string `json:"description"` // make required?
 	EmployerPublicID  string `json:"employerpublicid"`
-	MinSalary         int    `json:"minsalary"`
-	MaxSalary         int    `json:"maxsalary"`
-	PayPeriod         string `json:"payperiod"`
+	Remote            bool   `json:"remote"`
 	PostStartDatetime string `json:"poststartdatetime"`
 	PostEndDatetime   string `json:"postenddatetime"`
 }
@@ -151,15 +149,15 @@ func Helper_GetEmployer(publicID string, t *testing.T) *TestEmployer {
 
 func Helper_CreateJob(job *TestJob, t *testing.T) *TestJob {
 	stmt, err := database.DB.Prepare(`INSERT INTO 
-											jobs(title, jobtype, category, description,minsalary, maxsalary, payperiod, poststartdatetime, postenddatetime, employerid) 
-											VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, (SELECT id FROM employers WHERE publicid=$10)) 
+											jobs(title, jobtype, category, description, poststartdatetime, postenddatetime,remote, employerid) 
+											VALUES ($1, $2, $3, $4, $5, $6, $7, (SELECT id FROM employers WHERE publicid=$8)) 
 											RETURNING publicid;`)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 
-	err = stmt.QueryRow(job.Title, job.JobType, job.Category, job.Description, job.MinSalary, job.MaxSalary, job.PayPeriod, job.PostStartDatetime, job.PostEndDatetime, job.EmployerPublicID).Scan(&job.PublicID)
+	err = stmt.QueryRow(job.Title, job.JobType, job.Category, job.Description, job.PostStartDatetime, job.PostEndDatetime, job.Remote, job.EmployerPublicID).Scan(&job.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -176,9 +174,7 @@ func Helper_RandomJob(employer *TestEmployer, t *testing.T) *TestJob {
 		JobType:           string(encryption.GeneratePassword(5)),
 		Category:          string(encryption.GeneratePassword(5)),
 		Description:       string(encryption.GeneratePassword(5)),
-		MinSalary:         0,
-		MaxSalary:         100,
-		PayPeriod:         "hour",
+		Remote:            true,
 		PostStartDatetime: time.Now().Format(time.RFC3339),
 		PostEndDatetime:   time.Now().Format(time.RFC3339),
 		EmployerPublicID:  employer.PublicID,

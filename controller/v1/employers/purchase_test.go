@@ -89,8 +89,9 @@ func Test_Employer_PurchaseJobPackage_CorrectData(t *testing.T) {
 
 	defer ts.Close()
 
+	jobpackage := testhelper.Helper_RandomJobPackage(t)
 	data := map[string]string{
-		"jobpackage": "five",
+		"jobpackage": jobpackage.TypeID,
 	}
 
 	requestBody, err := json.Marshal(data)

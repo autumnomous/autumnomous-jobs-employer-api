@@ -99,16 +99,13 @@ func Test_Employer_CreateJob_CorrectData(t *testing.T) {
 
 	defer ts.Close()
 
-	data := map[string]string{
+	data := map[string]interface{}{
 		"title":             fmt.Sprintf("New Job %s", encryption.GeneratePassword(9)),
 		"jobtype":           "full-time",
 		"category":          "full-stack",
 		"description":       "This is a new job",
-		"payperiod":         "year",
-		"minsalary":         "10000",
-		"maxsalary":         "100000",
+		"remote":            false,
 		"poststartdatetime": time.Now().Format(time.RFC3339),
-		"postenddatetime":   time.Now().Format(time.RFC3339),
 	}
 
 	requestBody, err := json.Marshal(data)

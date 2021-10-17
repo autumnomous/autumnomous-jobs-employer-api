@@ -24,14 +24,12 @@ type Job struct {
 	Category          string `json:"category"`
 	Description       string `json:"description"` // make required?
 	EmployerPublicID  string `json:"employerpublicid"`
-	MinSalary         int    `json:"minsalary"`
-	MaxSalary         int    `json:"maxsalary"`
-	PayPeriod         string `json:"payperiod"`
+	Remote            bool   `json:"remote"`
 	PostStartDatetime string `json:"poststartdatetime"`
 	PostEndDatetime   string `json:"postenddatetime"`
 }
 
-func (repository *JobRepository) EmployerCreateJob(employerPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime, postEndDatetime, payPeriod string, minSalary, maxSalary int) (*Job, error) {
+func (repository *JobRepository) EmployerCreateJob(employerPublicID, jobTitle, jobType, category, jobDescription, postStartDatetime string, remote bool) (*Job, error) {
 
 	if jobTitle == "" {
 		return nil, errors.New("data cannot be empty")
@@ -45,9 +43,8 @@ func (repository *JobRepository) EmployerCreateJob(employerPublicID, jobTitle, j
 
 	stmt, err := repository.Database.Prepare(`
 		INSERT INTO 
-		jobs(title, jobtype, category, description, minsalary, 
-				maxsalary, payperiod, poststartdatetime, postenddatetime, employerid, slug) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, (SELECT id FROM employers WHERE publicid=$10), $11) 
+		jobs(title, jobtype, category, description,poststartdatetime, remote, employerid, slug) 
+		VALUES ($1, $2, $3, $4, $5, $6, (SELECT id FROM employers WHERE publicid=$7), $8) 
 		RETURNING publicid;`)
 
 	if err != nil {
@@ -55,7 +52,7 @@ func (repository *JobRepository) EmployerCreateJob(employerPublicID, jobTitle, j
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobTitle, jobType, category, jobDescription, minSalary, maxSalary, payPeriod, utils.NewNullString(postStartDatetime), utils.NewNullString(postEndDatetime), employerPublicID, slug).Scan(&job.PublicID)
+	err = stmt.QueryRow(jobTitle, jobType, category, jobDescription, utils.NewNullString(postStartDatetime), remote, employerPublicID, slug).Scan(&job.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -74,9 +71,8 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 	var job Job
 	var postStartDatetime, postEndDatetime sql.NullString
 	stmt, err := repository.Database.Prepare(`
-		SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
-			jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime,
-			jobs.postenddatetime, employers.publicid
+		SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, jobs.poststartdatetime,
+			jobs.postenddatetime, jobs.remote, employers.publicid
 		FROM jobs
 		JOIN employers ON employers.id=jobs.employerid
 		WHERE jobs.publicid=$1;`,
@@ -87,7 +83,7 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &postStartDatetime, &postEndDatetime, &job.EmployerPublicID)
+	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &postStartDatetime, &postEndDatetime, &job.Remote, &job.EmployerPublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -117,7 +113,7 @@ func (repository *JobRepository) GetEmployerJobs(employerPublicID string) ([]*Jo
 
 	stmt, err := repository.Database.Prepare(`
 			SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, 
-				jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.poststartdatetime, jobs.postenddatetime, jobs.publicid
+				jobs.poststartdatetime, jobs.postenddatetime, jobs.remote, jobs.publicid
 			FROM jobs
 			JOIN employers ON employers.id=jobs.employerid
 			WHERE jobs.employerid=(SELECT id FROM employers WHERE publicid=$1);`)
@@ -139,7 +135,7 @@ func (repository *JobRepository) GetEmployerJobs(employerPublicID string) ([]*Jo
 		job := &Job{}
 		var postStartDatetime, postEndDatetime sql.NullString
 
-		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &postStartDatetime, &postEndDatetime, &job.PublicID)
+		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &postStartDatetime, &postEndDatetime, &job.Remote, &job.PublicID)
 
 		if err != nil {
 			log.Println(err)
@@ -231,28 +227,13 @@ func (repository *JobRepository) EditJob(employerPublicID, jobPublicID, jobTitle
 		job.PostEndDatetime = postEndDatetime.Local().Format("2006-01-02")
 	}
 
-	// if postEndDatetime != "" {
-	// 	job.PostEndDatetime = postEndDatetime
-	// }
-
-	// if minSalary != 0 {
-	// 	job.MinSalary = minSalary
-	// }
-
-	// if maxSalary != 0 {
-	// 	job.MaxSalary = maxSalary
-	// }
-
-	// if payPeriod != "" {
-	// 	job.PayPeriod = payPeriod
-	// }
-	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, jobtype=$2, category=$3, description=$4, poststartdatetime=$5, postenddatetime=$6, minsalary=$7, maxsalary=$8, payperiod=$9, slug=$10 WHERE publicid=$11 AND employerid=(SELECT id FROM employers WHERE publicid=$12);`)
+	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, jobtype=$2, category=$3, description=$4, poststartdatetime=$5, postenddatetime=$6, slug=$7, remote=$8 WHERE publicid=$9 AND employerid=(SELECT id FROM employers WHERE publicid=$10);`)
 
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = stmt.Exec(job.Title, job.JobType, job.Category, job.Description, job.PostStartDatetime, job.PostEndDatetime, job.MinSalary, job.MaxSalary, job.PayPeriod, slug, job.PublicID, employerPublicID)
+	_, err = stmt.Exec(job.Title, job.JobType, job.Category, job.Description, job.PostStartDatetime, job.PostEndDatetime, slug, job.Remote, job.PublicID, employerPublicID)
 
 	if err != nil {
 		return nil, err

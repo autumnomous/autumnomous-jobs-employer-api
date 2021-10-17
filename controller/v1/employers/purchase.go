@@ -52,7 +52,7 @@ func PurchaseJobPackage(w http.ResponseWriter, r *http.Request) {
 	for i := 0; i < jobPackage.NumberOfJobs; i++ {
 		// TODO: jobDetails.PostEndDatetime = jobDetails.PostStartDatetime + 30 days
 
-		_, err := jobRepository.EmployerCreateJob(publicID, "Edit", "", "", "", "", "", "", 0, 0)
+		_, err := jobRepository.EmployerCreateJob(publicID, "Edit", "", "", "", "", false)
 
 		if err != nil {
 			log.Println(err)
@@ -61,5 +61,7 @@ func PurchaseJobPackage(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
+
+	response.SendJSONMessage(w, http.StatusOK, "success")
 
 }

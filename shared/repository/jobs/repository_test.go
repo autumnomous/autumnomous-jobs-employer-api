@@ -44,15 +44,10 @@ func Test_EmployerRepository_EmployerCreateJob_IncorrectData(t *testing.T) {
 		"jobtype":           "full-time",
 		"category":          "full-stack",
 		"description":       "This is a new job",
-		"payperiod":         "year",
 		"poststartdatetime": time.Now().String(),
-		"postenddatetime":   time.Now().String(),
 	}
 
-	minSalary := 10000
-	maxSalary := 100000
-
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], false)
 
 	assert.NotNil(err)
 	assert.Nil(job)
@@ -70,14 +65,10 @@ func Test_EmployerRepository_EmployerCreateJob_CorrectData(t *testing.T) {
 		"jobtype":           "full-time",
 		"category":          "full-stack",
 		"description":       "This is a new job",
-		"payperiod":         "year",
 		"poststartdatetime": time.Now().Format(time.RFC3339),
-		"postenddatetime":   time.Now().Format(time.RFC3339),
 	}
 
-	minSalary := 10000
-	maxSalary := 100000
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], data["postenddatetime"], data["payperiod"], minSalary, maxSalary)
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], false)
 
 	assert.NotNil(job)
 	assert.Nil(err)
