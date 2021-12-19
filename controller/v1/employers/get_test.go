@@ -1,6 +1,7 @@
 package employers_test
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"log"
@@ -217,5 +218,76 @@ func Test_Employer_GetCompany_Correct(t *testing.T) {
 	decoder.Decode(&result)
 	assert.Nil(err)
 	assert.Equal(int(http.StatusOK), response.StatusCode)
+
+}
+
+func Test_Employer_GetAutocompleteLocationData_Correct(t *testing.T) {
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(employers.GetAutocompleteLocationData))
+
+	defer ts.Close()
+
+	test := map[string]string{
+		"chars": "Cleve",
+	}
+
+	requestBody, err := json.Marshal(test)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	request, err := http.NewRequest("GET", ts.URL, bytes.NewBuffer(requestBody))
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	httpClient := &http.Client{}
+
+	response, err := httpClient.Do(request)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	var result map[string]interface{}
+
+	decoder := json.NewDecoder(response.Body)
+
+	err = decoder.Decode(&result)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	assert.Nil(err)
+	assert.Equal(int(http.StatusOK), response.StatusCode)
+	// assert.Contains(result, "publicid")
+
+}
+
+func Test_Employer_GetAutocompleteLocationData_IncorrectMethod(t *testing.T) {
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(employers.GetAutocompleteLocationData))
+
+	defer ts.Close()
+
+	methods := []string{"GET", "DELETE", "PUT"}
+
+	for _, method := range methods {
+		request, err := http.NewRequest(method, ts.URL, nil)
+
+		if err != nil {
+			t.Fatal()
+		}
+
+		httpClient := &http.Client{}
+
+		response, err := httpClient.Do(request)
+
+		assert.Nil(err)
+		assert.Equal(int(http.StatusMethodNotAllowed), response.StatusCode)
+	}
 
 }

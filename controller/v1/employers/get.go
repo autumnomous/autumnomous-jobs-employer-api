@@ -4,17 +4,22 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 
 	"bit-jobs-api/shared/repository/employers"
 	"bit-jobs-api/shared/repository/jobpackages"
 	"bit-jobs-api/shared/repository/jobs"
 	"bit-jobs-api/shared/response"
 	"bit-jobs-api/shared/services/security/jwt"
+	"bit-jobs-api/shared/services/zipcode"
 )
 
 type JobsResponse struct {
-	Jobs             []*jobs.Job `json:"jobs"`
-	TotalPostsBought int         `json:"totalpostsbought"`
+	Jobs []*jobs.Job `json:"jobs"`
+}
+
+type AutocompleteLocationData struct {
+	Characters string `json:"chars"`
 }
 
 func GetJobs(w http.ResponseWriter, r *http.Request) {
@@ -150,5 +155,35 @@ func GetEmployerCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendJSON(w, company)
+
+}
+
+func GetAutocompleteLocationData(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		response.SendJSONMessage(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var details AutocompleteLocationData
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&details)
+
+	if details.Characters == "" {
+		response.SendJSONMessage(w, http.StatusBadRequest, response.MissingRequiredValue)
+		return
+	}
+
+	gateway := zipcode.NewZipCodeGateway(os.Getenv("ZIPCODESERVICES_API_KEY"))
+
+	data, err := gateway.GetAutoComplete(details.Characters)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	response.SendJSON(w, data)
 
 }
