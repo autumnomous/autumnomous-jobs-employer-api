@@ -47,6 +47,7 @@ func routes() *httprouter.Router {
 	r.POST("/employer/get/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetJob)))
 	r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.DeleteJob)))
 	r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetActiveJobPackages)))
+	r.POST("/employer/get/location/autocomplete", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetAutocompleteLocationData)))
 
 	r.POST("/employer/buy/job-package", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.PurchaseJobPackage)))
 
