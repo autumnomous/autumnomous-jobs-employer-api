@@ -30,15 +30,17 @@ type updateAccountData struct {
 }
 
 type updateCompanyData struct {
-	Name         string `json:"name"`
-	Location     string `json:"location"`
-	URL          string `json:"url"`
-	Facebook     string `json:"facebook"`
-	Twitter      string `json:"twitter"`
-	Instagram    string `json:"instagram"`
-	Description  string `json:"description"`
-	Logo         string `json:"logo"`
-	ExtraDetails string `json:"extradetails"`
+	Name         string  `json:"name"`
+	Location     string  `json:"location"`
+	Longitude    float64 `json:"longitude"`
+	Latitude     float64 `json:"latitude"`
+	URL          string  `json:"url"`
+	Facebook     string  `json:"facebook"`
+	Twitter      string  `json:"twitter"`
+	Instagram    string  `json:"instagram"`
+	Description  string  `json:"description"`
+	Logo         string  `json:"logo"`
+	ExtraDetails string  `json:"extradetails"`
 }
 
 type updatePaymentMethodData struct {
@@ -161,7 +163,7 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	company, err := repository.UpdateEmployerCompany(publicID, data.Name, data.Location, data.URL, data.Facebook, data.Twitter, data.Instagram, data.Description, data.Logo, data.ExtraDetails)
+	company, err := repository.UpdateEmployerCompany(publicID, data.Name, data.Location, data.URL, data.Facebook, data.Twitter, data.Instagram, data.Description, data.Logo, data.ExtraDetails, data.Longitude, data.Latitude)
 
 	if err != nil {
 		log.Println(err)

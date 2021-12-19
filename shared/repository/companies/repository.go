@@ -10,17 +10,19 @@ type CompanyRepository struct {
 }
 
 type Company struct {
-	Name         string `json:"name"`
-	Domain       string `json:"domain"`
-	Location     string `json:"location"`
-	URL          string `json:"url"`
-	Facebook     string `json:"facebook"`
-	Twitter      string `json:"twitter"`
-	Instagram    string `json:"instagram"`
-	Description  string `json:"description"`
-	Logo         string `json:"logo"`
-	ExtraDetails string `json:"extradetails"`
-	PublicID     string `json:"publicid"`
+	Name         string  `json:"name"`
+	Domain       string  `json:"domain"`
+	Location     string  `json:"location"`
+	Longitude    float64 `json:"longitude"`
+	Latitude     float64 `json:"latitude"`
+	URL          string  `json:"url"`
+	Facebook     string  `json:"facebook"`
+	Twitter      string  `json:"twitter"`
+	Instagram    string  `json:"instagram"`
+	Description  string  `json:"description"`
+	Logo         string  `json:"logo"`
+	ExtraDetails string  `json:"extradetails"`
+	PublicID     string  `json:"publicid"`
 }
 
 func NewCompanyRepository(db *sql.DB) *CompanyRepository {

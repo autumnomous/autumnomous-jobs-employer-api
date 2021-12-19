@@ -18,6 +18,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func init() {
+	testhelper.Init()
+}
+
 func Test_Employer_UpdatePassword_Success(t *testing.T) {
 
 	assert := assert.New(t)

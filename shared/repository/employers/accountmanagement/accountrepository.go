@@ -321,12 +321,12 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 	return Employer, nil
 }
 
-func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, companyName, location, url, facebook, twitter, instagram, description, logo, extradetails string) (*companies.Company, error) {
+func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, companyName, location, url, facebook, twitter, instagram, description, logo, extradetails string, longitude, latitude float64) (*companies.Company, error) {
 
 	var company companies.Company
-
+	var companyLongitude, companyLatitude sql.NullFloat64
 	stmt, err := repository.Database.Prepare(`
-		SELECT companies.name, companies.location, companies.url, 
+		SELECT companies.name, companies.location, companies.longitude, companies.latitude, companies.url, 
 			companies.facebook, companies.twitter, companies.instagram, 
 			companies.logo, companies.description, companies.extradetails,
 			companies.domain, companies.publicid
@@ -339,11 +339,19 @@ func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, co
 		return nil, err
 	}
 
-	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Location, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.Domain, &company.PublicID)
+	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Location, &companyLongitude, &companyLatitude, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.Domain, &company.PublicID)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
+	}
+
+	if companyLongitude.Valid {
+		company.Longitude = companyLongitude.Float64
+	}
+
+	if companyLatitude.Valid {
+		company.Latitude = companyLatitude.Float64
 	}
 
 	if companyName != "" {
@@ -352,6 +360,14 @@ func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, co
 
 	if location != "" {
 		company.Location = location
+	}
+
+	if longitude != 0 {
+		company.Longitude = longitude
+	}
+
+	if latitude != 0 {
+		company.Latitude = latitude
 	}
 
 	if url != "" {
@@ -382,14 +398,14 @@ func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, co
 		company.ExtraDetails = extradetails
 	}
 
-	stmt, err = repository.Database.Prepare(`UPDATE companies SET name=$1, location=$2, url=$3, facebook=$4, twitter=$5, instagram=$6, description=$7, logo=$8, extradetails=$9 WHERE publicid=$10;`)
+	stmt, err = repository.Database.Prepare(`UPDATE companies SET name=$1, location=$2, url=$3, facebook=$4, twitter=$5, instagram=$6, description=$7, logo=$8, extradetails=$9, longitude=$10, latitude=$11 WHERE publicid=$12;`)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	_, err = stmt.Exec(company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails, company.PublicID)
+	_, err = stmt.Exec(company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails, company.Longitude, company.Latitude, company.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -477,7 +493,7 @@ func (repository *EmployerRepository) GetEmployerCompany(employerPublicID string
 	var company companies.Company
 	stmt, err := repository.Database.Prepare(`
 				SELECT 
-					name, domain, location, url, facebook, twitter, instagram,
+					name, domain, location, longitude, latitude, url, facebook, twitter, instagram,
 					description, logo, extradetails, publicid
 				FROM companies 
 				WHERE id = (SELECT companyid FROM employers WHERE publicid=$1);`)
@@ -487,7 +503,7 @@ func (repository *EmployerRepository) GetEmployerCompany(employerPublicID string
 		return nil, err
 	}
 
-	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Domain, &company.Location, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.PublicID)
+	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Domain, &company.Location, &company.Longitude, &company.Latitude, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.PublicID)
 
 	if err != nil {
 		log.Println(err)
