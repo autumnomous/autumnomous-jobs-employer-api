@@ -44,6 +44,7 @@ func GenerateToken(userId string) (string, error) {
 	claims := JWTData{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 168).Unix(), // week
+			IssuedAt:  time.Now().Unix(),
 		},
 		CustomClaims: map[string]string{
 			"user": userId,
