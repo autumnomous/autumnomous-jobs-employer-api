@@ -11,12 +11,15 @@ import (
 )
 
 type createJobDetails struct {
-	Title             string `json:"title"`
-	JobType           string `json:"jobtype"`
-	Category          string `json:"category"`
-	Description       string `json:"description"` // make required?
-	Remote            bool   `json:"remote"`
-	PostStartDatetime string `json:"poststartdatetime"`
+	Title       string `json:"title"`
+	JobType     string `json:"jobtype"`
+	Category    string `json:"category"`
+	Description string `json:"description"` // make required?
+	Remote      bool   `json:"remote"`
+	VisibleDate string `json:"visibledate"`
+	PayPeriod   string `json:"payperiod"`
+	MinSalary   int64  `json:"minsalary"`
+	MaxSalary   int64  `json:"maxsalary"`
 }
 
 func CreateJob(w http.ResponseWriter, r *http.Request) {
@@ -42,7 +45,7 @@ func CreateJob(w http.ResponseWriter, r *http.Request) {
 
 	// TODO: jobDetails.PostEndDatetime = jobDetails.PostStartDatetime + 30 days
 
-	job, err := repository.EmployerCreateJob(publicID, jobDetails.Title, jobDetails.JobType, jobDetails.Category, jobDetails.Description, jobDetails.PostStartDatetime, jobDetails.Remote)
+	job, err := repository.EmployerCreateJob(publicID, jobDetails.Title, jobDetails.JobType, jobDetails.Category, jobDetails.Description, jobDetails.VisibleDate, jobDetails.PayPeriod, jobDetails.Remote, jobDetails.MinSalary, jobDetails.MaxSalary)
 
 	if err != nil {
 		log.Println(err)

@@ -40,14 +40,17 @@ func Test_EmployerRepository_EmployerCreateJob_IncorrectData(t *testing.T) {
 	Employer = testhelper.Helper_CreateEmployer(Employer, t)
 
 	data := map[string]string{
-		"title":             "",
-		"jobtype":           "full-time",
-		"category":          "full-stack",
-		"description":       "This is a new job",
-		"poststartdatetime": time.Now().String(),
+		"title":       "",
+		"jobtype":     "full-time",
+		"category":    "full-stack",
+		"description": "This is a new job",
+		"visibledate": time.Now().String(),
+		"payperiod":   "yearly",
 	}
+	minSalary := 1000
+	maxSalary := 10000
 
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], false)
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["visibledate"], data["payperiod"], false, int64(minSalary), int64(maxSalary))
 
 	assert.NotNil(err)
 	assert.Nil(job)
@@ -61,14 +64,18 @@ func Test_EmployerRepository_EmployerCreateJob_CorrectData(t *testing.T) {
 	Employer := testhelper.Helper_RandomEmployer(t)
 
 	data := map[string]string{
-		"title":             "Job Title",
-		"jobtype":           "full-time",
-		"category":          "full-stack",
-		"description":       "This is a new job",
-		"poststartdatetime": time.Now().Format(time.RFC3339),
+		"title":       "Job Title",
+		"jobtype":     "full-time",
+		"category":    "full-stack",
+		"description": "This is a new job",
+		"visibledate": time.Now().Format(time.RFC3339),
+		"payperiod":   "yearly",
 	}
 
-	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["poststartdatetime"], false)
+	minSalary := 1000
+	maxSalary := 10000
+
+	job, err := repository.EmployerCreateJob(Employer.PublicID, data["title"], data["jobtype"], data["category"], data["description"], data["visibledate"], data["payperiod"], false, int64(minSalary), int64(maxSalary))
 
 	assert.NotNil(job)
 	assert.Nil(err)
@@ -182,7 +189,7 @@ func Test_EmployerRepository_EditJob_MissingJobPublicID(t *testing.T) {
 
 	employer := testhelper.Helper_RandomEmployer(t)
 
-	job, err := repository.EditJob(employer.PublicID, "", "", "", "", "", "", true)
+	job, err := repository.EditJob(employer.PublicID, "", "", "", "", "", "", "", true, 0, 0)
 
 	assert.Nil(job)
 	assert.NotNil(err)
@@ -194,7 +201,7 @@ func Test_EmployerRepository_EditJob_MissingEmployerPublicID(t *testing.T) {
 
 	repository := jobs.NewJobRegistry().GetJobRepository()
 
-	job, err := repository.EditJob("", "", "", "", "", "", "", true)
+	job, err := repository.EditJob("", "", "", "", "", "", "", "", true, 0, 0)
 
 	assert.Nil(job)
 	assert.NotNil(err)
@@ -210,7 +217,7 @@ func Test_EmployerRepository_EditJob_Correct(t *testing.T) {
 
 	job := testhelper.Helper_RandomJob(employer, t)
 
-	result, err := repository.EditJob(employer.PublicID, job.PublicID, "A Job", "full-time", "full-stack", "this is a job", "2021-09-04", true)
+	result, err := repository.EditJob(employer.PublicID, job.PublicID, "A Job", "full-time", "full-stack", "this is a job", "2021-09-04", "yearly", true, 1000, 10000)
 
 	assert.NotNil(result)
 	assert.Equal(result.Title, "A Job")
