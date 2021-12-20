@@ -70,7 +70,9 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 		return nil, errors.New("missing required value")
 	}
 	var job Job
-	var visibleDate sql.NullString
+	var visibleDate, payPeriod sql.NullString
+	var minSalary, maxSalary sql.NullInt64
+
 	stmt, err := repository.Database.Prepare(`
 		SELECT jobs.title, jobs.jobtype, jobs.category, jobs.description, jobs.visibledate, jobs.remote, jobs.minsalary, jobs.maxsalary, jobs.payperiod, employers.publicid
 		FROM jobs
@@ -83,7 +85,7 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 		return nil, err
 	}
 
-	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.EmployerPublicID)
+	err = stmt.QueryRow(jobPublicID).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &minSalary, &maxSalary, &payPeriod, &job.EmployerPublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -94,6 +96,18 @@ func (repository *JobRepository) GetJob(jobPublicID string) (*Job, error) {
 
 	if visibleDate.Valid {
 		job.VisibleDate = visibleDate.String
+	}
+
+	if payPeriod.Valid {
+		job.PayPeriod = payPeriod.String
+	}
+
+	if minSalary.Valid {
+		job.MinSalary = minSalary.Int64
+	}
+
+	if maxSalary.Valid {
+		job.MaxSalary = maxSalary.Int64
 	}
 
 	return &job, nil
@@ -129,9 +143,10 @@ func (repository *JobRepository) GetEmployerJobs(employerPublicID string) ([]*Jo
 	defer rows.Close()
 	for rows.Next() {
 		job := &Job{}
-		var visibleDate sql.NullString
+		var visibleDate, payPeriod sql.NullString
+		var minSalary, maxSalary sql.NullInt64
 
-		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &job.MinSalary, &job.MaxSalary, &job.PayPeriod, &job.PublicID)
+		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &minSalary, &maxSalary, &payPeriod, &job.PublicID)
 
 		if err != nil {
 			log.Println(err)
@@ -141,6 +156,18 @@ func (repository *JobRepository) GetEmployerJobs(employerPublicID string) ([]*Jo
 
 		if visibleDate.Valid {
 			job.VisibleDate = visibleDate.String
+		}
+
+		if payPeriod.Valid {
+			job.PayPeriod = payPeriod.String
+		}
+
+		if minSalary.Valid {
+			job.MinSalary = minSalary.Int64
+		}
+
+		if maxSalary.Valid {
+			job.MaxSalary = maxSalary.Int64
 		}
 
 		jobs = append(jobs, job)
