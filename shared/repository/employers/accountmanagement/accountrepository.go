@@ -321,7 +321,7 @@ func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName,
 	return Employer, nil
 }
 
-func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, companyName, location, url, facebook, twitter, instagram, description, logo, extradetails string, longitude, latitude float64) (*companies.Company, error) {
+func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, companyName, location, url, facebook, twitter, instagram, description, logo, extradetails, zipcode string, longitude, latitude float64) (*companies.Company, error) {
 
 	var company companies.Company
 	var companyLongitude, companyLatitude sql.NullFloat64
@@ -329,7 +329,7 @@ func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, co
 		SELECT companies.name, companies.location, companies.longitude, companies.latitude, companies.url, 
 			companies.facebook, companies.twitter, companies.instagram, 
 			companies.logo, companies.description, companies.extradetails,
-			companies.domain, companies.publicid
+			companies.domain, companies.publicid, companies.zipcode
 		FROM companies 
 		JOIN employers ON employers.companyid = companies.id 
 		WHERE employers.publicid=$1;`)
@@ -339,7 +339,7 @@ func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, co
 		return nil, err
 	}
 
-	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Location, &companyLongitude, &companyLatitude, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.Domain, &company.PublicID)
+	err = stmt.QueryRow(employerPublicID).Scan(&company.Name, &company.Location, &companyLongitude, &companyLatitude, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.Domain, &company.PublicID, &company.Zipcode)
 
 	if err != nil {
 		log.Println(err)
@@ -398,14 +398,18 @@ func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, co
 		company.ExtraDetails = extradetails
 	}
 
-	stmt, err = repository.Database.Prepare(`UPDATE companies SET name=$1, location=$2, url=$3, facebook=$4, twitter=$5, instagram=$6, description=$7, logo=$8, extradetails=$9, longitude=$10, latitude=$11 WHERE publicid=$12;`)
+	if zipcode != "" {
+		company.Zipcode = zipcode
+	}
+
+	stmt, err = repository.Database.Prepare(`UPDATE companies SET name=$1, location=$2, url=$3, facebook=$4, twitter=$5, instagram=$6, description=$7, logo=$8, extradetails=$9, longitude=$10, latitude=$11, zipcode=$12 WHERE publicid=$13;`)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	_, err = stmt.Exec(company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails, company.Longitude, company.Latitude, company.PublicID)
+	_, err = stmt.Exec(company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails, company.Longitude, company.Latitude, company.Zipcode, company.PublicID)
 
 	if err != nil {
 		log.Println(err)

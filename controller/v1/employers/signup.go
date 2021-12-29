@@ -67,7 +67,7 @@ func SignUp(w http.ResponseWriter, r *http.Request) {
 
 	companyDomain := strings.SplitN(credentials.Email, "@", 2)[1]
 
-	company, err := companyRepository.GetOrCreateCompany(companyDomain, "", "", "", "", "", "", "", "", "")
+	company, err := companyRepository.GetOrCreateCompany(companyDomain, "", "", "", "", "", "", "", "", "", "")
 
 	if err != nil {
 		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)

@@ -23,30 +23,31 @@ type Company struct {
 	Logo         string  `json:"logo"`
 	ExtraDetails string  `json:"extradetails"`
 	PublicID     string  `json:"publicid"`
+	Zipcode      string  `json:"zipcode"`
 }
 
 func NewCompanyRepository(db *sql.DB) *CompanyRepository {
 	return &CompanyRepository{Database: db}
 }
 
-func (repository *CompanyRepository) GetOrCreateCompany(domain, name, location, url, facebook, twitter, instagram, description, logo, extradetails string) (*Company, error) {
+func (repository *CompanyRepository) GetOrCreateCompany(domain, name, location, url, facebook, twitter, instagram, description, logo, extradetails, zipcode string) (*Company, error) {
 	var company Company
 
-	stmt, err := repository.Database.Prepare(`SELECT name, location, url, facebook, twitter, instagram, description, logo, extradetails, publicid FROM companies WHERE domain=$1;`)
+	stmt, err := repository.Database.Prepare(`SELECT name, location, url, facebook, twitter, instagram, description, logo, extradetails, zipcode, publicid FROM companies WHERE domain=$1;`)
 
 	if err != nil {
 		log.Println(err)
 		return nil, err
 	}
 
-	err = stmt.QueryRow(domain).Scan(&company.Name, &company.Location, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.PublicID)
+	err = stmt.QueryRow(domain).Scan(&company.Name, &company.Location, &company.URL, &company.Facebook, &company.Twitter, &company.Instagram, &company.Description, &company.Logo, &company.ExtraDetails, &company.Zipcode, &company.PublicID)
 
 	if err != nil {
 
 		if err.Error() == "sql: no rows in result set" {
 			stmt, err := repository.Database.Prepare(`
-				INSERT INTO companies(name, location, url, facebook, twitter, instagram, description, logo, extradetails, domain) VALUES
-				($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+				INSERT INTO companies(name, location, url, facebook, twitter, instagram, description, logo, extradetails, zipcode, domain) VALUES
+				($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 				RETURNING publicid;`)
 
 			if err != nil {
@@ -71,6 +72,7 @@ func (repository *CompanyRepository) GetOrCreateCompany(domain, name, location, 
 			company.Logo = logo
 			company.ExtraDetails = extradetails
 			company.Domain = domain
+			company.Zipcode = zipcode
 
 		} else {
 			log.Println(err)

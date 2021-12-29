@@ -41,6 +41,7 @@ type updateCompanyData struct {
 	Description  string  `json:"description"`
 	Logo         string  `json:"logo"`
 	ExtraDetails string  `json:"extradetails"`
+	Zipcode      string  `json:"zipcode"`
 }
 
 type updatePaymentMethodData struct {
@@ -163,7 +164,7 @@ func UpdateCompany(w http.ResponseWriter, r *http.Request) {
 
 	repository := employers.NewEmployerRegistry().GetEmployerRepository()
 
-	company, err := repository.UpdateEmployerCompany(publicID, data.Name, data.Location, data.URL, data.Facebook, data.Twitter, data.Instagram, data.Description, data.Logo, data.ExtraDetails, data.Longitude, data.Latitude)
+	company, err := repository.UpdateEmployerCompany(publicID, data.Name, data.Location, data.URL, data.Facebook, data.Twitter, data.Instagram, data.Description, data.Logo, data.ExtraDetails, data.Zipcode, data.Longitude, data.Latitude)
 
 	if err != nil {
 		log.Println(err)
