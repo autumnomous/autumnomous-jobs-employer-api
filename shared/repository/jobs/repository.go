@@ -1,7 +1,7 @@
 package jobs
 
 import (
-	"bit-jobs-api/shared/services/utils"
+	"autumnomous-jobs-employer-api/shared/services/utils"
 	"database/sql"
 	"errors"
 	"log"

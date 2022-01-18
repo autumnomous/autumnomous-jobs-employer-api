@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"bit-jobs-api/shared/repository/jobs"
-	"bit-jobs-api/shared/response"
-	"bit-jobs-api/shared/services/security/jwt"
+	"autumnomous-jobs-employer-api/shared/repository/jobs"
+	"autumnomous-jobs-employer-api/shared/response"
+	"autumnomous-jobs-employer-api/shared/services/security/jwt"
 )
 
 type editJobDetails struct {

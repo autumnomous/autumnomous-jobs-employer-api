@@ -1,8 +1,8 @@
 package jobpackages_test
 
 import (
-	"bit-jobs-api/shared/repository/jobpackages"
-	"bit-jobs-api/shared/testhelper"
+	"autumnomous-jobs-employer-api/shared/repository/jobpackages"
+	"autumnomous-jobs-employer-api/shared/testhelper"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

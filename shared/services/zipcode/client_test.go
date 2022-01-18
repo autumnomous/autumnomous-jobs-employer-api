@@ -1,7 +1,7 @@
 package zipcode_test
 
 import (
-	"bit-jobs-api/shared/services/zipcode"
+	"autumnomous-jobs-employer-api/shared/services/zipcode"
 	"log"
 	"os"
 	"testing"

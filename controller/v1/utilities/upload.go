@@ -1,7 +1,7 @@
 package utilities
 
 import (
-	"bit-jobs-api/shared/response"
+	"autumnomous-jobs-employer-api/shared/response"
 	"net/http"
 	"os"
 

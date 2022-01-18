@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"bit-jobs-api/shared/repository/employers"
-	"bit-jobs-api/shared/response"
-	jwt "bit-jobs-api/shared/services/security/jwt"
+	"autumnomous-jobs-employer-api/shared/repository/employers"
+	"autumnomous-jobs-employer-api/shared/response"
+	jwt "autumnomous-jobs-employer-api/shared/services/security/jwt"
 )
 
 func ValidateJWT(h http.Handler) http.Handler {

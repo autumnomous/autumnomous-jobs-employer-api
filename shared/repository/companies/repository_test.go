@@ -1,9 +1,9 @@
 package companies_test
 
 import (
-	"bit-jobs-api/shared/repository/companies"
-	"bit-jobs-api/shared/services/security/encryption"
-	"bit-jobs-api/shared/testhelper"
+	"autumnomous-jobs-employer-api/shared/repository/companies"
+	"autumnomous-jobs-employer-api/shared/services/security/encryption"
+	"autumnomous-jobs-employer-api/shared/testhelper"
 	"fmt"
 	"testing"
 

@@ -8,9 +8,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"bit-jobs-api/controller/v1/employers"
-	"bit-jobs-api/shared/services/security/jwt"
-	"bit-jobs-api/shared/testhelper"
+	"autumnomous-jobs-employer-api/controller/v1/employers"
+	"autumnomous-jobs-employer-api/shared/services/security/jwt"
+	"autumnomous-jobs-employer-api/shared/testhelper"
 
 	"github.com/stretchr/testify/assert"
 )

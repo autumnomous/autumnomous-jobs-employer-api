@@ -1,7 +1,7 @@
 package jobpackages
 
 import (
-	"bit-jobs-api/shared/database"
+	"autumnomous-jobs-employer-api/shared/database"
 )
 
 type JobPackageRegistry struct {

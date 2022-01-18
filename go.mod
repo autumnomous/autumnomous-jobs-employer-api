@@ -1,4 +1,4 @@
-module bit-jobs-api
+module autumnomous-jobs-employer-api
 
 // +heroku goVersion go1.16
 go 1.16

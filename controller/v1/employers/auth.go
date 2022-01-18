@@ -6,9 +6,9 @@ import (
 	"log"
 	"net/http"
 
-	"bit-jobs-api/shared/repository/employers"
-	"bit-jobs-api/shared/response"
-	"bit-jobs-api/shared/services/security/jwt"
+	"autumnomous-jobs-employer-api/shared/repository/employers"
+	"autumnomous-jobs-employer-api/shared/response"
+	"autumnomous-jobs-employer-api/shared/services/security/jwt"
 )
 
 type LoginCredentials struct {

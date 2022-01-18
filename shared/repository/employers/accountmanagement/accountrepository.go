@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"bit-jobs-api/shared/repository/companies"
-	"bit-jobs-api/shared/services/security/encryption"
+	"autumnomous-jobs-employer-api/shared/repository/companies"
+	"autumnomous-jobs-employer-api/shared/services/security/encryption"
 
 	_ "github.com/lib/pq"
 )

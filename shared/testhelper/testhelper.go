@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"bit-jobs-api/shared/database"
-	"bit-jobs-api/shared/services/security/encryption"
+	"autumnomous-jobs-employer-api/shared/database"
+	"autumnomous-jobs-employer-api/shared/services/security/encryption"
 
 	"github.com/joho/godotenv"
 )

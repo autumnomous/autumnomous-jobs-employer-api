@@ -1,6 +1,6 @@
 package companies
 
-import "bit-jobs-api/shared/database"
+import "autumnomous-jobs-employer-api/shared/database"
 
 type CompanyRegistry struct {
 }

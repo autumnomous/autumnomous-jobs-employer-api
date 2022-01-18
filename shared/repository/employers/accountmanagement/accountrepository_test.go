@@ -5,11 +5,11 @@ import (
 	"log"
 	"testing"
 
-	"bit-jobs-api/shared/database"
-	employers "bit-jobs-api/shared/repository/employers"
-	"bit-jobs-api/shared/repository/employers/accountmanagement"
-	"bit-jobs-api/shared/services/security/encryption"
-	"bit-jobs-api/shared/testhelper"
+	"autumnomous-jobs-employer-api/shared/database"
+	employers "autumnomous-jobs-employer-api/shared/repository/employers"
+	"autumnomous-jobs-employer-api/shared/repository/employers/accountmanagement"
+	"autumnomous-jobs-employer-api/shared/services/security/encryption"
+	"autumnomous-jobs-employer-api/shared/testhelper"
 
 	"github.com/stretchr/testify/assert"
 )

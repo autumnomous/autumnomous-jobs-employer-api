@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"os"
 
-	"bit-jobs-api/shared/repository/employers"
-	"bit-jobs-api/shared/repository/jobpackages"
-	"bit-jobs-api/shared/repository/jobs"
-	"bit-jobs-api/shared/response"
-	"bit-jobs-api/shared/services/security/jwt"
-	"bit-jobs-api/shared/services/zipcode"
+	"autumnomous-jobs-employer-api/shared/repository/employers"
+	"autumnomous-jobs-employer-api/shared/repository/jobpackages"
+	"autumnomous-jobs-employer-api/shared/repository/jobs"
+	"autumnomous-jobs-employer-api/shared/response"
+	"autumnomous-jobs-employer-api/shared/services/security/jwt"
+	"autumnomous-jobs-employer-api/shared/services/zipcode"
 )
 
 type JobsResponse struct {
