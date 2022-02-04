@@ -248,6 +248,10 @@ func (repository *JobRepository) EditJob(employerPublicID, jobPublicID, jobTitle
 		job.MaxSalary = maxSalary
 	}
 
+	if payPeriod != "" {
+		job.PayPeriod = payPeriod
+	}
+
 	stmt, err := repository.Database.Prepare(`UPDATE jobs SET title=$1, jobtype=$2, category=$3, description=$4, visibledate=$5, slug=$6, remote=$7 , minsalary=$8, maxsalary=$9, payperiod=$10 WHERE publicid=$11 AND employerid=(SELECT id FROM employers WHERE publicid=$12);`)
 
 	if err != nil {
