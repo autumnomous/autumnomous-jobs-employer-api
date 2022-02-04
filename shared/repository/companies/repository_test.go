@@ -28,11 +28,12 @@ func Test_CompanyRepository_GetOrCreateCompany_Create_Correct(t *testing.T) {
 		"description":  "",
 		"logo":         "",
 		"extradetails": "",
+		"zipcode":      "",
 	}
 
 	repository := companies.NewCompanyRegistry().GetCompanyRepository()
 
-	result, err := repository.GetOrCreateCompany(data["domain"], data["name"], data["location"], data["url"], data["facebook"], data["twitter"], data["instagram"], data["description"], data["logo"], data["extradetails"])
+	result, err := repository.GetOrCreateCompany(data["domain"], data["name"], data["location"], data["url"], data["facebook"], data["twitter"], data["instagram"], data["description"], data["logo"], data["extradetails"], data["zipcode"])
 
 	assert.Nil(err)
 	assert.NotNil(result)
@@ -47,7 +48,7 @@ func Test_CompanyRepository_GetOrCreateCompany_Get_Correct(t *testing.T) {
 
 	repository := companies.NewCompanyRegistry().GetCompanyRepository()
 
-	result, err := repository.GetOrCreateCompany(company.Domain, "", "", "", "", "", "", "", "", "")
+	result, err := repository.GetOrCreateCompany(company.Domain, "", "", "", "", "", "", "", "", "", "")
 
 	assert.Nil(err)
 	assert.NotNil(result)
